@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Den</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#111;--bg-panel:#1a1a1a;--bg-card:#222;--bg-input:#2a2a2a;--bg-hover:#2e2e2e;
+  --border:#2e2e2e;--border-card:#282828;
+  --text:#f0f0f0;--text2:#999;--text3:#555;
+  --blue:#4a9eff;--blue-dim:rgba(74,158,255,.1);
+  --red:#ff453a;--red-dim:rgba(255,69,58,.1);
+  --orange:#ff9f0a;--orange-dim:rgba(255,159,10,.1);
+  --green:#32d74b;--green-dim:rgba(50,215,75,.1);
+  --purple:#bf5af2;--r:10px;--r-sm:6px;
+  --font:'Arial Nova',Arial,'Helvetica Neue',sans-serif;
+}
+html,body{height:100vh;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-rows:72px 1fr;grid-template-columns:210px 1fr 350px;height:100vh;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{grid-column:1/-1;background:var(--bg-panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;position:relative;z-index:20}
+.logo{position:absolute;left:50%;transform:translateX(-50%);font-size:26px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--text);white-space:nowrap;pointer-events:none}
+.logo em{color:var(--text3);font-style:normal;font-weight:400;font-size:20px}
+.nav-tabs{display:flex;gap:3px}
+.nav-tab{padding:6px 14px;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;border:none;background:none;font-family:var(--font);transition:all .15s}
+.nav-tab:hover{background:var(--bg-hover);color:var(--text)}
+.nav-tab.active{background:var(--bg-hover);color:var(--text)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-btn{background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-size:12px;padding:5px 10px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.tb-btn:hover{color:var(--text)}
+.tb-btn.connected{color:var(--green);border-color:rgba(50,215,75,.3)}
+.clock-d{color:var(--text3);font-size:12px;font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg-panel);border-right:1px solid var(--border);overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column}
+.sb-label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);padding:0 8px;margin:14px 0 5px}
+.sb-label:first-child{margin-top:4px}
+.sb-item{display:flex;align-items:center;padding:6px 8px;border-radius:var(--r-sm);cursor:pointer;gap:8px;color:var(--text2);font-size:13px;transition:all .12s;white-space:nowrap}
+.sb-item:hover{background:var(--bg-hover);color:var(--text)}
+.sb-item.active{background:var(--bg-hover);color:var(--text)}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sb-count{margin-left:auto;font-size:11px;color:var(--text3);background:var(--bg-input);padding:1px 6px;border-radius:8px;min-width:18px;text-align:center}
+.sb-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.sb-stat{display:flex;justify-content:space-between;padding:3px 8px;font-size:12px;color:var(--text2)}
+.sb-stat b{color:var(--text)}
+
+/* ── CENTER COLUMN ── */
+.center-col{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.main-scroll{flex:1;overflow-y:auto;padding:24px 28px}
+.view{display:none;flex-direction:column;gap:16px}
+.view.active{display:flex}
+
+/* ── CARDS ── */
+.card{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--r);padding:18px 20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text2)}
+.card-action{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;font-family:var(--font)}
+.card-action:hover{opacity:.7}
+
+/* ── MORNING WIZARD ── */
+.wizard-step{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:300px;padding:32px 20px;gap:20px}
+.wizard-step.active{display:flex}
+.wizard-title{font-size:28px;font-weight:300;color:var(--text);letter-spacing:-.02em}
+.wizard-sub{font-size:16px;color:var(--text2);max-width:480px;line-height:1.6}
+.wizard-quote{font-size:22px;font-style:italic;color:var(--text);line-height:1.65;max-width:560px}
+.wizard-quote-attr{font-size:14px;color:var(--text3);margin-top:4px}
+.next-btn{padding:12px 36px;border-radius:var(--r);border:none;background:var(--text);color:#111;font-size:15px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;margin-top:8px}
+.next-btn:hover{background:#ccc}
+.next-btn:disabled{opacity:.35;cursor:not-allowed}
+.skip-btn{padding:8px 20px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-family:var(--font);cursor:pointer}
+.skip-btn:hover{color:var(--text)}
+
+/* CHECKIN TOGGLES */
+.toggle-row{display:flex;align-items:center;gap:14px;padding:12px 0}
+.toggle-wrap{width:44px;height:24px;border-radius:12px;background:var(--bg-input);border:1.5px solid var(--border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-wrap.on{background:var(--green);border-color:var(--green)}
+.toggle-wrap::after{content:'';width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.toggle-wrap.on::after{left:22px}
+.toggle-label{font-size:18px;font-weight:400;color:var(--text)}
+
+/* MEDITATION / JOURNAL TIMER */
+.timer-ring-wrap{position:relative;width:160px;height:160px}
+.timer-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bg-hover);stroke-width:8}
+.ring-prog{fill:none;stroke:var(--blue);stroke-width:8;stroke-linecap:round;stroke-dasharray:439.8;stroke-dashoffset:0;transition:stroke-dashoffset .5s linear}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--text)}
+.timer-controls{display:flex;gap:10px;align-items:center}
+.timer-btn{padding:10px 24px;border-radius:var(--r-sm);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.timer-start{background:var(--blue);color:#fff}
+.timer-start:hover{background:#3a8eef}
+.timer-label{font-size:18px;color:var(--text2)}
+
+/* JOURNAL TEXTAREA */
+.journal-area{width:100%;max-width:560px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:14px 16px;resize:none;font-family:var(--font);line-height:1.7;height:160px;outline:none}
+.journal-area:focus{border-color:var(--blue)}
+.journal-area::placeholder{color:var(--text3)}
+
+/* ONE THING */
+.one-thing-input{width:100%;max-width:520px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:18px;padding:14px 18px;outline:none;font-family:var(--font);text-align:center;transition:border-color .15s}
+.one-thing-input:focus{border-color:var(--blue)}
+.one-thing-input::placeholder{color:var(--text3);font-size:15px}
+
+/* CALENDAR STEP */
+.cal-event-step{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-input);border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer;transition:background .12s}
+.cal-event-step:hover{background:var(--bg-hover)}
+.cal-bar{width:4px;height:32px;border-radius:2px;background:var(--blue);flex-shrink:0}
+.cal-time-text{font-size:13px;color:var(--text2);min-width:70px}
+.cal-title-text{font-size:15px;color:var(--text)}
+.cal-add-btn{padding:10px 20px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-family:var(--font);cursor:pointer;margin-top:4px}
+.cal-add-btn:hover{color:var(--text);border-color:var(--text2)}
+
+/* ── TASKS VIEW ── */
+.quick-add-row{display:flex;gap:8px}
+.quick-input{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:15px;padding:9px 12px;outline:none;font-family:var(--font);transition:border-color .15s}
+.quick-input:focus{border-color:var(--blue)}
+.quick-input::placeholder{color:var(--text3)}
+.btn{padding:8px 16px;border-radius:var(--r-sm);border:none;cursor:pointer;font-size:14px;font-weight:500;font-family:var(--font);transition:all .15s}
+.btn-primary{background:var(--text);color:#111}
+.btn-primary:hover{background:#ccc}
+.btn-ghost{background:var(--bg-hover);color:var(--text2)}
+.btn-ghost:hover{color:var(--text)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:var(--font);transition:all .15s}
+.chip:hover{color:var(--text);border-color:var(--text2)}
+.chip.active{border-color:transparent}
+.chip-all.active{background:var(--bg-hover);color:var(--text);border-color:var(--bg-hover)}
+.chip-high.active{background:var(--red-dim);color:var(--red);border-color:rgba(255,69,58,.3)}
+.chip-med.active{background:var(--orange-dim);color:var(--orange);border-color:rgba(255,159,10,.3)}
+.chip-low.active{background:var(--bg-hover);color:var(--text2)}
+.chip-done.active{background:var(--green-dim);color:var(--green);border-color:rgba(50,215,75,.3)}
+
+/* TASK ITEMS */
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s}
+.task-item:hover{background:var(--bg-hover)}
+.task-item.suggested{background:rgba(74,158,255,.04);border-left:2px solid var(--blue)}
+.task-item.done-item{opacity:.4}
+.check{width:17px;height:17px;border:1.5px solid var(--text3);border-radius:5px;flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.check:hover{border-color:var(--green)}
+.check.checked{background:var(--green);border-color:var(--green)}
+.check.checked::after{content:'';width:8px;height:5px;border-left:1.5px solid #000;border-bottom:1.5px solid #000;transform:rotate(-45deg) translateY(-1px);display:block}
+.p-flag{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.p-high{background:var(--red)}.p-med{background:var(--orange)}.p-low{background:var(--text3)}
+.task-body{flex:1;min-width:0}
+.task-title-text{font-size:15px;color:var(--text);line-height:1.45;word-break:break-word}
+.done-item .task-title-text{text-decoration:line-through;color:var(--text3)}
+.task-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:4px;font-weight:500}
+.tag-project{background:var(--bg-input);color:var(--text2)}
+.tag-suggested{background:var(--blue-dim);color:var(--blue)}
+.tag-waiting{background:var(--orange-dim);color:var(--orange)}
+.tag-commit{background:var(--purple-dim,rgba(191,90,242,.1));color:var(--purple)}
+.due-text{font-size:11px;color:var(--text3)}
+.due-overdue{color:var(--red)}
+.task-notes-preview{font-size:12px;color:var(--text2);margin-top:3px}
+.suggest-actions{display:flex;gap:6px;margin-top:7px}
+.sa-btn{padding:4px 11px;border-radius:4px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.sa-approve{background:var(--green-dim);color:var(--green)}
+.sa-deny{background:var(--red-dim);color:var(--red)}
+.section-head{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:10px 0 5px}
+.section-head:first-child{padding-top:0}
+.empty-state{text-align:center;color:var(--text3);padding:32px 0;font-size:14px;line-height:1.8}
+.empty-state strong{display:block;color:var(--text2);font-size:15px;margin-bottom:5px}
+
+/* PROJECTS */
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.proj-card{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.proj-card:hover{border-color:var(--text3);transform:translateY(-1px)}
+.proj-card-top{position:absolute;top:0;left:0;right:0;height:3px}
+.proj-card-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.proj-card-count{font-size:12px;color:var(--text2)}
+.proj-card-next{font-size:12px;color:var(--text3);margin-top:8px;border-top:1px solid var(--border-card);padding-top:8px;line-height:1.4}
+
+/* TRANSCRIPT */
+.t-area{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:13px;padding:12px;resize:vertical;font-family:'SF Mono',monospace;line-height:1.6;min-height:180px;outline:none}
+.t-area:focus{border-color:var(--blue)}
+.ex-item{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;background:var(--bg-input);border-radius:var(--r-sm);border:1px solid var(--border-card);margin-bottom:6px}
+.ex-type{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin-top:2px;flex-shrink:0}
+.et-task{background:var(--blue-dim);color:var(--blue)}
+.et-commit{background:rgba(191,90,242,.1);color:var(--purple)}
+.et-waiting{background:var(--orange-dim);color:var(--orange)}
+.et-event{background:var(--green-dim);color:var(--green)}
+.et-idea{background:var(--bg-hover);color:var(--text2)}
+.ex-text-input{flex:1;background:transparent;border:none;color:var(--text);font-size:14px;font-family:var(--font);outline:none;resize:none;line-height:1.4}
+
+/* ── FLINT (bottom of center) ── */
+.flint-panel{background:var(--bg-panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;height:440px}
+.flint-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.flint-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);flex-shrink:0}
+.flint-dot.paused{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.flint-name{font-size:13px;font-weight:700;letter-spacing:.07em}
+.flint-sub{font-size:11px;color:var(--text3);margin-left:auto}
+.flint-msgs{flex:1;overflow-y:auto;padding:8px 16px;display:flex;flex-direction:column;gap:6px}
+.msg{padding:7px 11px;border-radius:7px;font-size:14px;line-height:1.55;max-width:100%;word-break:break-word}
+.msg-flint{background:var(--bg-card);color:var(--text);border-bottom-left-radius:2px}
+.msg-user{background:var(--blue-dim);border:1px solid rgba(74,158,255,.18);color:var(--text);border-bottom-right-radius:2px;align-self:flex-end;max-width:80%}
+.msg-sys{background:var(--green-dim);color:var(--green);font-size:12px;border:1px solid rgba(50,215,75,.2)}
+.msg-label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+.flint-input-wrap{padding:8px 16px 10px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:flex-end}
+.flint-drop-zone{font-size:11px;color:var(--text3);cursor:pointer;padding:6px 10px;border:1px dashed var(--border);border-radius:var(--r-sm);white-space:nowrap;position:relative;transition:all .15s;flex-shrink:0}
+.flint-drop-zone:hover{border-color:var(--blue);color:var(--blue)}
+.flint-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.flint-input{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:14px;padding:8px 12px;resize:none;font-family:var(--font);line-height:1.5;height:54px;max-height:90px;outline:none;transition:border-color .15s}
+.flint-input:focus{border-color:var(--blue)}
+.flint-input::placeholder{color:var(--text3)}
+.flint-send{padding:8px 16px;border-radius:var(--r-sm);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);height:54px;flex-shrink:0}
+.flint-send:hover{background:#3a8eef}
+
+/* ── RIGHT COLUMN: SMART SCHEDULE ── */
+.schedule-col{background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sched-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sched-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:3px}
+.sched-focus{font-size:13px;color:var(--blue);margin-top:4px;font-style:italic}
+.sched-now{font-size:12px;color:var(--text3);margin-top:2px}
+.sched-body{flex:1;overflow-y:auto;padding:10px 12px}
+
+/* schedule blocks */
+.sched-event{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(74,158,255,.07);border:1px solid rgba(74,158,255,.18);border-radius:var(--r-sm);margin-bottom:8px}
+.sched-ev-bar{width:3px;height:32px;border-radius:2px;background:var(--blue);flex-shrink:0}
+.sched-ev-time{font-size:12px;color:var(--text2);min-width:58px}
+.sched-ev-title{font-size:14px;color:var(--text)}
+.sched-now-line{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11px;color:var(--red);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.sched-now-line::before,.sched-now-line::after{content:'';flex:1;height:1px;background:rgba(255,69,58,.3)}
+.free-block{margin-bottom:12px}
+.free-block-header{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.05em;padding:5px 0 6px;text-transform:uppercase}
+.sched-task{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bg-card);border:1px solid var(--border-card);margin-bottom:5px;cursor:pointer;transition:background .12s;position:relative}
+.sched-task:hover{background:var(--bg-hover)}
+.sched-task-p{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.sched-task-body{flex:1;min-width:0}
+.sched-task-title{font-size:13px;color:var(--text);line-height:1.4}
+.sched-task-proj{font-size:11px;color:var(--text2);margin-top:2px}
+.sched-task-actions{display:flex;gap:5px;position:absolute;right:8px;top:8px;opacity:0;transition:opacity .15s}
+.sched-task:hover .sched-task-actions{opacity:1}
+.sched-ta-btn{width:22px;height:22px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:var(--font)}
+.sched-ta-edit{background:var(--blue-dim);color:var(--blue)}
+.sched-ta-del{background:var(--red-dim);color:var(--red)}
+.sched-empty{text-align:center;padding:20px 0;color:var(--text3);font-size:13px}
+.sched-past{opacity:.4}
+
+/* ── MODALS ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-backdrop.show{display:flex}
+.modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--r);padding:22px;width:480px;max-width:92vw;max-height:88vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:18px}
+.form-row{margin-bottom:13px}
+.form-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:5px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:15px;padding:9px 12px;outline:none;font-family:var(--font);appearance:none;transition:border-color .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue)}
+.form-textarea{resize:vertical;min-height:70px;line-height:1.5}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.deny-reason{font-size:14px;line-height:1.6;color:var(--text2);padding:12px;background:var(--orange-dim);border-radius:var(--r-sm);border:1px solid rgba(255,159,10,.2);margin-bottom:13px}
+.bulk-item{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border-card);font-size:14px}
+.bulk-item:last-child{border-bottom:none}
+.bulk-title{flex:1}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.form-select option{background:#2a2a2a}
+input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.4)}
+
+/* ── FONT SIZE +25% ── */
+body{font-size:19px}
+.nav-tab{font-size:16px}
+.tb-btn{font-size:15px}
+.sb-label{font-size:13px}
+.sb-item{font-size:16px}
+.sb-count{font-size:14px}
+.sb-stat{font-size:15px}
+.card-title{font-size:14px}
+.card-action{font-size:15px}
+.wizard-title{font-size:35px}
+.wizard-sub{font-size:20px}
+.wizard-quote{font-size:27px}
+.wizard-quote-attr{font-size:18px}
+.toggle-label{font-size:22px}
+.timer-text{font-size:40px}
+#jour-time{font-size:25px}
+.timer-label{font-size:22px}
+.one-thing-input{font-size:22px}
+.quick-input{font-size:19px}
+.btn{font-size:18px}
+.chip{font-size:15px}
+.task-title-text{font-size:19px}
+.tag{font-size:14px}
+.task-notes-preview{font-size:15px}
+.due-text{font-size:14px}
+.section-head{font-size:14px}
+.empty-state{font-size:18px}
+.proj-card-name{font-size:18px}
+.proj-card-count{font-size:15px}
+.proj-card-next{font-size:15px}
+.t-area{font-size:16px}
+.flint-name{font-size:16px}
+.flint-sub{font-size:14px}
+.msg{font-size:18px}
+.msg-sys{font-size:15px}
+.flint-input{font-size:18px}
+.flint-send{font-size:18px}
+.sched-title{font-size:14px}
+.sched-focus{font-size:16px}
+.sched-now{font-size:15px}
+.sched-ev-time{font-size:15px}
+.sched-ev-title{font-size:18px}
+.free-block-header{font-size:14px}
+.sched-task-title{font-size:16px}
+.sched-task-proj{font-size:14px}
+.modal-title{font-size:20px}
+.form-label{font-size:14px}
+.form-input,.form-select,.form-textarea{font-size:19px}
+.form-hint{font-size:14px}
+.deny-reason{font-size:18px}
+.bulk-item{font-size:18px}
+.clock-d{font-size:15px}
+.cal-time-text{font-size:16px}
+.cal-title-text{font-size:19px}
+.logo{font-size:33px}
+
+/* ── GOOGLE CALENDAR PANEL ── */
+.gcal-section{flex-shrink:0;border-top:2px solid var(--border);display:flex;flex-direction:column;max-height:45%}
+.gcal-header{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.gcal-title{font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)}
+.gcal-date{font-size:13px;color:var(--text3)}
+.gcal-body{overflow-y:auto;padding:6px 12px 12px}
+.gcal-event{display:flex;gap:10px;padding:9px 11px;background:rgba(74,158,255,.07);border:1px solid rgba(74,158,255,.15);border-radius:var(--r-sm);margin-bottom:7px;align-items:flex-start}
+.gcal-bar{width:3px;border-radius:2px;background:var(--blue);flex-shrink:0;align-self:stretch;min-height:28px}
+.gcal-time{font-size:13px;color:var(--text2);min-width:72px;padding-top:2px}
+.gcal-info{}
+.gcal-name{font-size:15px;color:var(--text);line-height:1.35}
+.gcal-dur{font-size:12px;color:var(--text3);margin-top:2px}
+.gcal-empty{text-align:center;padding:16px 0;color:var(--text3);font-size:14px}
+.gcal-sync-btn{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;font-family:var(--font);padding:0}
+.gcal-sync-btn:hover{opacity:.7}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-view="den">Den</button>
+    <button class="nav-tab" data-view="tasks">Tasks</button>
+    <button class="nav-tab" data-view="projects">Projects</button>
+    <button class="nav-tab" data-view="transcript">Transcript</button>
+  </nav>
+  <div class="logo"><span style="font-weight:300;color:var(--text3);letter-spacing:.18em">THE </span><span style="font-weight:800;color:var(--text);letter-spacing:.1em">DEN</span></div>
+  <div class="tb-right">
+    <button class="tb-btn" id="cal-btn" onclick="handleCalSync()">&#x1F4C5; Calendar</button>
+    <button class="tb-btn" id="drive-btn" onclick="handleDriveSync()">&#x1F4C1; Drive</button>
+    <button class="tb-btn" id="fieldy-btn" onclick="testFieldyConnection()" title="Test Fieldy connection">&#x1F4E1; Fieldy</button>
+    <button class="tb-btn" onclick="resetDay()" title="Reset to morning wizard">&#x21BA; Reset Day</button>
+    <button class="tb-btn" onclick="openSettings()">&#x2699; Settings</button>
+    <span class="clock-d" id="clock-d"></span>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-label" style="margin-top:4px">Filter</div>
+  <div class="sb-item active" data-project="all"><div class="sb-dot" style="background:var(--text2)"></div>All Tasks<span class="sb-count" id="sc-all">0</span></div>
+  <div class="sb-item" data-project="__urgent__"><div class="sb-dot" style="background:var(--red)"></div>Urgent<span class="sb-count" id="sc-urgent">0</span></div>
+  <div class="sb-item" data-project="__waiting__"><div class="sb-dot" style="background:var(--orange)"></div>Waiting On<span class="sb-count" id="sc-waiting">0</span></div>
+  <div class="sb-item" data-project="__suggested__"><div class="sb-dot" style="background:var(--blue)"></div>Suggested<span class="sb-count" id="sc-suggested">0</span></div>
+  <div id="sb-projects"></div>
+  <div class="sb-bottom">
+    <div class="sb-stat">Done today<b id="stat-done">0</b></div>
+    <div class="sb-stat">Remaining<b id="stat-rem">0</b></div>
+  </div>
+</aside>
+
+<!-- CENTER COLUMN -->
+<div class="center-col">
+  <div class="main-scroll" id="main-scroll">
+
+    <!-- DEN VIEW: MORNING WIZARD -->
+    <div id="view-den" class="view active">
+      <div id="wizard-wrap">
+
+        <!-- STEP 1: CHECK-IN -->
+        <div class="wizard-step active" id="step-checkin">
+          <div class="wizard-title">Good morning, Stu.</div>
+          <div class="wizard-sub" id="wizard-date"></div>
+          <div style="margin:8px 0">
+            <div class="toggle-row"><div class="toggle-wrap" id="tog-meds" onclick="toggleCheckin('meds')"></div><span class="toggle-label">Meds taken</span></div>
+            <div class="toggle-row"><div class="toggle-wrap" id="tog-water" onclick="toggleCheckin('water')"></div><span class="toggle-label">Water in hand</span></div>
+          </div>
+          <button class="next-btn" onclick="nextStep()">Next &rarr;</button>
+        </div>
+
+        <!-- STEP 2: QUOTE -->
+        <div class="wizard-step" id="step-quote" style="padding:0;min-height:360px;position:relative;border-radius:var(--r);overflow:hidden;width:100%">
+          <div id="quote-bg-img" style="position:absolute;inset:0;background-size:cover;background-position:center"></div>
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.2) 100%)"></div>
+          <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:360px;padding:36px 32px;text-align:center;gap:14px">
+            <div class="wizard-quote" id="wiz-quote" style="color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)"></div>
+            <div class="wizard-quote-attr" id="wiz-attr" style="color:rgba(255,255,255,.65)"></div>
+            <div style="display:flex;gap:10px;margin-top:6px">
+              <button class="skip-btn" onclick="refreshQuote()" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)">New quote</button>
+              <button class="next-btn" onclick="nextStep()">Next &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: MEDITATION -->
+        <div class="wizard-step" id="step-meditation">
+          <div class="wizard-title">Five minutes. Breathe.</div>
+          <div class="wizard-sub">Clear your mind before the day starts.</div>
+          <div class="timer-ring-wrap">
+            <svg class="timer-svg" width="160" height="160" viewBox="0 0 160 160">
+              <circle class="ring-bg" cx="80" cy="80" r="70"/>
+              <circle class="ring-prog" id="med-ring" cx="80" cy="80" r="70"/>
+            </svg>
+            <div class="timer-text" id="med-time">5:00</div>
+          </div>
+          <div class="timer-controls">
+            <button class="timer-btn timer-start" id="med-start-btn" onclick="startTimer('med',300)">Start</button>
+            <button class="next-btn" id="med-next" onclick="nextStep()" style="padding:10px 24px">Skip &rarr;</button>
+          </div>
+        </div>
+
+        <!-- STEP 4: JOURNAL -->
+        <div class="wizard-step" id="step-journal">
+          <div class="wizard-title">Five minutes. Write.</div>
+          <div class="wizard-sub">No editing. Just words.</div>
+          <textarea class="journal-area" id="journal-text" placeholder="What's on your mind today?"></textarea>
+          <div class="timer-ring-wrap" style="width:100px;height:100px;margin:0 auto">
+            <svg class="timer-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-prog" id="jour-ring" cx="50" cy="50" r="42" style="stroke-dasharray:263.9"/>
+            </svg>
+            <div class="timer-text" id="jour-time" style="font-size:20px">5:00</div>
+          </div>
+          <div class="timer-controls">
+            <button class="timer-btn timer-start" id="jour-start-btn" onclick="startTimer('jour',300)">Start</button>
+            <button class="next-btn" onclick="nextStep()" style="padding:10px 24px">Next &rarr;</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: ONE THING -->
+        <div class="wizard-step" id="step-onething">
+          <div class="wizard-title">What is your One Thing today?</div>
+          <div class="wizard-sub">The single task that, if completed, makes today a success.</div>
+          <input type="text" class="one-thing-input" id="one-thing-input" placeholder="Type your One Thing...">
+          <button class="next-btn" onclick="setOneThing()">Set My Focus &rarr;</button>
+        </div>
+
+        <!-- STEP 6: CALENDAR -->
+        <div class="wizard-step" id="step-calendar">
+          <div class="wizard-title">Today's Schedule</div>
+          <div class="wizard-sub">Review and adjust before you begin.</div>
+          <div id="wizard-cal-events" style="width:100%;max-width:500px;text-align:left"></div>
+          <button class="cal-add-btn" onclick="openAddEvent()">+ Add Event</button>
+          <button class="next-btn" onclick="finishWizard()">Begin My Day &rarr;</button>
+        </div>
+
+      </div><!-- wizard-wrap -->
+
+      <!-- POST-WIZARD CONTENT (hidden until wizard done) -->
+      <div id="post-wizard" style="display:none;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Today's Focus</span></div>
+          <div id="focus-display" style="font-size:20px;font-weight:300;color:var(--text)"></div>
+        </div>
+        <div id="drive-results"></div>
+      </div>
+    </div>
+
+    <!-- TASKS VIEW -->
+    <div id="view-tasks" class="view">
+      <div class="quick-add-row">
+        <input type="text" class="quick-input" id="quick-input" placeholder="Quick add a task... (Enter)" autocomplete="off">
+        <button class="btn btn-ghost btn-sm" onclick="openAddModal()">+ Detail</button>
+      </div>
+      <div class="filter-row">
+        <button class="chip chip-all active" data-pf="all">All</button>
+        <button class="chip chip-high" data-pf="high">Urgent</button>
+        <button class="chip chip-med" data-pf="med">Important</button>
+        <button class="chip chip-low" data-pf="low">Backlog</button>
+        <button class="chip" data-pf="waiting">Waiting On</button>
+        <button class="chip chip-done" data-pf="done">Done</button>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- PROJECTS VIEW -->
+    <div id="view-projects" class="view">
+      <div class="projects-grid" id="projects-grid"></div>
+    </div>
+
+    <!-- TRANSCRIPT VIEW -->
+    <div id="view-transcript" class="view">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Paste Fieldy Transcript</span></div>
+        <textarea class="t-area" id="t-input" placeholder="Paste your Fieldy transcript here..."></textarea>
+        <div style="display:flex;gap:9px;margin-top:12px">
+          <button class="btn btn-primary" onclick="processManualTranscript()">Process</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('t-input').value=''">Clear</button>
+        </div>
+      </div>
+      <div id="t-results" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Extracted Items</span><button class="card-action" onclick="importExtracted('t-extracted-list')">Import Selected</button></div>
+          <div id="t-extracted-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- main-scroll -->
+
+  <!-- FLINT PANEL - pinned to bottom -->
+  <div class="flint-panel">
+    <div class="flint-header">
+      <div class="flint-dot" id="flint-dot"></div>
+      <div class="flint-name">FLINT</div>
+      <div class="flint-sub" id="flint-sub">Ready</div>
+    </div>
+    <div class="flint-msgs" id="flint-msgs"></div>
+    <div class="flint-input-wrap">
+      <div class="flint-drop-zone">&#x1F4CE; File<input type="file" id="flint-file" accept=".txt,.md,.csv,.xlsx,.xls,.docx,.doc" onchange="handleFileUpload(this.files[0])"></div>
+      <textarea class="flint-input" id="flint-input" placeholder="Tell Flint anything — task, question, transcript..."></textarea>
+      <button class="flint-send" onclick="sendFlint()">Send</button>
+    </div>
+  </div>
+</div><!-- center-col -->
+
+<!-- RIGHT: SMART SCHEDULE + GOOGLE CALENDAR -->
+<aside class="schedule-col">
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+    <!-- Smart Schedule -->
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+      <div class="sched-header">
+        <div class="sched-title">Today's Schedule</div>
+        <div class="sched-focus" id="sched-focus" style="display:none"></div>
+        <div class="sched-now" id="sched-now"></div>
+      </div>
+      <div class="sched-body" id="sched-body" style="flex:1;overflow-y:auto"></div>
+    </div>
+    <!-- Google Calendar -->
+    <div class="gcal-section" id="gcal-section">
+      <div class="gcal-header">
+        <div>
+          <div class="gcal-title">Google Calendar</div>
+          <div class="gcal-date" id="gcal-date"></div>
+        </div>
+        <button class="gcal-sync-btn" onclick="handleCalSync()">&#x21BA; Sync</button>
+      </div>
+      <div class="gcal-body" id="gcal-body">
+        <div class="gcal-empty">Connect Google Calendar to see today's events.</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+</div><!-- .app -->
+
+<!-- TASK MODAL -->
+<div class="modal-backdrop" id="task-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">New Task</div>
+    <div class="form-row"><label class="form-label">Task</label><input type="text" class="form-input" id="mt-title" placeholder="What needs to be done?"></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Project</label><select class="form-select" id="mt-project"></select></div>
+      <div><label class="form-label">Priority</label><select class="form-select" id="mt-priority"><option value="high">Urgent</option><option value="med" selected>Important</option><option value="low">Backlog</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Status</label><select class="form-select" id="mt-status"><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="waiting">Waiting On</option><option value="done">Done</option></select></div>
+    <div class="form-row" id="waiting-row" style="display:none"><label class="form-label">Waiting On</label><input type="text" class="form-input" id="mt-waiting"></div>
+    <div class="form-row"><label class="form-label">Property / Subfolder <span style="font-weight:400;color:var(--text3)">(optional — e.g. 1271 Simcoe St N)</span></label><input type="text" class="form-input" id="mt-subfolder" placeholder="Group related tasks by property or initiative"></div>
+    <div class="form-row"><label class="form-label">Due Date</label><input type="date" class="form-input" id="mt-due"></div>
+    <div class="form-row"><label class="form-label">Notes</label><textarea class="form-textarea" id="mt-notes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="delete-btn" style="display:none;color:var(--red);margin-right:auto" onclick="deleteCurrentTask()">Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTaskModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DENY MODAL -->
+<div class="modal-backdrop" id="deny-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Are you sure?</div>
+    <div class="deny-reason" id="deny-reason"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('deny-modal')">Keep It</button>
+      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red)" onclick="confirmDeny()">Yes, Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK MODAL -->
+<div class="modal-backdrop" id="bulk-modal">
+  <div class="modal" style="width:540px">
+    <div class="modal-title">Bulk Import <span id="bulk-count" style="color:var(--text2);font-weight:400;font-size:14px"></span></div>
+    <div style="max-height:340px;overflow-y:auto" id="bulk-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('bulk-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmBulkImport()">Import All</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-backdrop" id="event-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Add Event</div>
+    <div class="form-row"><label class="form-label">Title</label><input type="text" class="form-input" id="me-title"></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Date</label><input type="date" class="form-input" id="me-date"></div>
+      <div><label class="form-label">Time</label><input type="time" class="form-input" id="me-time" style="color-scheme:dark"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Duration</label>
+      <select class="form-select" id="me-dur"><option value="30">30 min</option><option value="60" selected>1 hour</option><option value="90">90 min</option><option value="120">2 hours</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('event-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal">
+    <div class="modal-title">Settings</div>
+    <div class="form-row"><label class="form-label">AI Provider</label><select class="form-select" id="s-provider"><option value="openai">OpenAI (GPT-4o)</option><option value="anthropic">Anthropic (Claude)</option></select></div>
+    <div class="form-row"><label class="form-label">OpenAI API Key</label><input type="password" class="form-input" id="s-openai" placeholder="sk-..."><div class="form-hint">Get one at platform.openai.com</div></div>
+    <div class="form-row"><label class="form-label">Anthropic API Key</label><input type="password" class="form-input" id="s-anthropic" placeholder="sk-ant-..."></div>
+    <div class="form-row"><label class="form-label">Google OAuth Client ID</label><input type="text" class="form-input" id="s-google" placeholder="xxxxx.apps.googleusercontent.com"><div class="form-hint">Create at console.cloud.google.com. Authorized origin: http://localhost:8080</div></div>
+    <div class="form-row" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <label class="form-label">Task Backup</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="exportBackup()">Export JSON backup</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">Restore from backup<input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0])"></label>
+      </div>
+      <div class="form-hint">Export saves all tasks locally. Restore imports without overwriting existing tasks.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('settings-modal')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('settings-modal');testAPIKey()">Test Key</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const PROJECTS=[
+  {id:'real-estate',name:'Real Estate',color:'#4a9eff'},
+  {id:'cargo',name:'CarGoThenWeGo',color:'#34c759'},
+  {id:'burn-the-sky',name:'Burn The Sky',color:'#ff9f0a'},
+  {id:'pumpkin',name:'Pumpkin Patch',color:'#ff6b6b'},
+  {id:'unspun',name:'UNSPUN',color:'#bf5af2'},
+  {id:'politics',name:'Politics',color:'#5ac8fa'},
+  {id:'life-systems',name:'Life Systems',color:'#636366'},
+  {id:'family',name:'Family',color:'#ff2d55'},
+  {id:'finance',name:'Finance',color:'#30d158'},
+  {id:'legal',name:'Legal and Admin',color:'#ff6b35'},
+  {id:'ideas',name:'Idea Bank',color:'#98989e'},
+  {id:'personal',name:'Personal',color:'#666'},
+];
+const CHALLENGE_BANK=['Send one follow-up to a real estate prospect','Post one update to your accountability channel','Chase one Waiting On item','Make three cold calls in 10 minutes','Clear your email inbox to zero','Log all expenses from today','Add 5 prospects to your real estate database','Research one property opportunity','Record a 2-minute accountability update','Follow up on one fireworks inquiry','Review your consumer proposal schedule','Reach out to one past client'];
+const QUOTES=[
+  {t:'We\'re all just walking each other home.',a:'Ram Dass'},
+  {t:'The quieter you become, the more you can hear.',a:'Ram Dass'},
+  {t:'You are loved just for being who you are, just for existing.',a:'Ram Dass'},
+  {t:'When you know how to listen, everybody is the guru.',a:'Ram Dass'},
+  {t:'Treat everyone you meet like God in drag.',a:'Ram Dass'},
+  {t:'The most important aspect of love is not in giving or the receiving — it\'s in the being.',a:'Ram Dass'},
+  {t:'Be here now.',a:'Ram Dass'},
+  {t:'It\'s only when caterpillarness is done that one becomes a butterfly. That process of transformation is not always smooth.',a:'Ram Dass'},
+  {t:'You are not your thoughts. You are the awareness behind the thoughts.',a:'Ram Dass'},
+  {t:'The spiritual journey is individual, highly personal. It can\'t be organized or regulated.',a:'Ram Dass'},
+  {t:'The game is not about becoming somebody, it\'s about becoming nobody.',a:'Ram Dass'},
+  {t:'Each of us finds his unique vehicle for the journey.',a:'Ram Dass'},
+  {t:'I would say that the thrust of my life has been initially about getting free, and then recognizing that my freedom is not independent of everybody else\'s freedom.',a:'Ram Dass'},
+  {t:'The only way I can help you is to work on myself. The only way you can help me is to work on yourself.',a:'Ram Dass'},
+  {t:'The thinking mind is what is busy. You have to transcend the thinking mind.',a:'Ram Dass'},
+  {t:'You are the universe experiencing itself.',a:'Alan Watts'},
+  {t:'The meaning of life is just to be alive. It is so plain and so obvious and so simple.',a:'Alan Watts'},
+  {t:'No valid plans for the future can be made by those who have no capacity for living now.',a:'Alan Watts'},
+  {t:'You didn\'t come into this world. You came out of it, like a wave from the ocean.',a:'Alan Watts'},
+  {t:'Muddy water is best cleared by leaving it alone.',a:'Alan Watts'},
+  {t:'The present moment always will have been.',a:'Alan Watts'},
+  {t:'Out beyond ideas of wrongdoing and rightdoing there is a field. I\'ll meet you there.',a:'Rumi'},
+  {t:'The wound is the place where the light enters you.',a:'Rumi'},
+  {t:'Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.',a:'Rumi'},
+  {t:'Don\'t grieve. Anything you lose comes round in another form.',a:'Rumi'},
+  {t:'Let yourself be drawn by the stronger pull of that which you truly love.',a:'Rumi'},
+  {t:'Between stimulus and response there is a space. In that space is our power to choose our response.',a:'Viktor Frankl'},
+  {t:'Those who have a why to live can bear almost any how.',a:'Viktor Frankl'},
+  {t:'When we are no longer able to change a situation, we are challenged to change ourselves.',a:'Viktor Frankl'},
+  {t:'Everything can be taken from a man but one thing: the last of the human freedoms — to choose one\'s attitude.',a:'Viktor Frankl'},
+  {t:'The present moment is the only moment available to us, and it is the door to all moments.',a:'Thich Nhat Hanh'},
+  {t:'Smile, breathe, and go slowly.',a:'Thich Nhat Hanh'},
+  {t:'If you are quiet enough, you will hear the flow of the universe. You will feel its rhythm. Go with this flow.',a:'Buddha'},
+  {t:'Start where you are. Use what you have. Do what you can.',a:'Arthur Ashe'},
+  {t:'It is not the mountain we conquer but ourselves.',a:'Edmund Hillary'},
+  {t:'The journey of a thousand miles begins with a single step.',a:'Lao Tzu'},
+  {t:'Your task is not to seek for love, but merely to seek and find all the barriers within yourself that you have built against it.',a:'Rumi'},
+  {t:'Does this belong in a project, or is this a search for enlightenment?',a:'The Core Framework'},
+  {t:'Creative, lean businesses that enable relocation to Whistler or Kelowna by 2028.',a:'The Vision'},
+  {t:'Track promises. Maintain integrity. Help maintain discipline and momentum.',a:'Flint'},
+  {t:'The goal is not to be better than the other man, but your previous self.',a:'The Dalai Lama'},
+  {t:'In the end, it\'s not the years in your life that count. It\'s the life in your years.',a:'Abraham Lincoln'},
+  {t:'The cave you fear to enter holds the treasure you seek.',a:'Joseph Campbell'},
+  {t:'Do not go where the path may lead, go instead where there is no path and leave a trail.',a:'Ralph Waldo Emerson'},
+];
+const BC_IMAGES=[
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1500534314209-a157d0f1b6f9?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1551524163-b22b4aaae3ef?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1527489377706-5bf97e608852?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1440342359743-84fcb8c21f21?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?auto=format&w=1400&q=80',
+  'https://images.unsplash.com/photo-1542621334-a254cf47b244?auto=format&w=1400&q=80',
+];
+const EST_MINS={high:30,med:20,low:15};
+// ── STATE ───────────────────────────────────────────────
+let state={tasks:[],events:[],activeView:'den',activeProject:'all',activePriority:'all',
+  editingTaskId:null,flintPaused:false,googleToken:null,googleTokenExpiry:0,
+  processedDriveFiles:[],checkin:{meds:false,water:false},oneThing:'',wizardStep:0,
+  wizardDone:false,wizardDate:'',lastDriveCheck:'',
+  settings:{openai_key:'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',anthropic_key:'',google_client_id:'208315653524-777sbqgaukshcnolb7rmhgbas41qvtvc.apps.googleusercontent.com',ai_provider:'openai'},
+  flintMsgs:[]};
+let pendingDenyId=null,bulkTasksCache=[],extractedCache=[],tokenClient=null;
+let medTimer=null,jourTimer=null,medSecs=300,jourSecs=300;
+// ── PERSISTENCE ─────────────────────────────────────────
+function save(){
+  const payload={tasks:state.tasks,events:state.events,oneThing:state.oneThing,wizardDone:state.wizardDone,wizardDate:state.wizardDate,lastDriveCheck:state.lastDriveCheck,googleToken:state.googleToken,googleTokenExpiry:state.googleTokenExpiry,processedDriveFiles:state.processedDriveFiles,settings:state.settings};
+  try{localStorage.setItem('den_v3',JSON.stringify(payload));}catch(e){}
+  // Also save to disk via webhook server (fire-and-forget)
+  fetch('http://localhost:9090/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>{});
+}
+function applyLoadedData(d){
+  state.tasks=Array.isArray(d.tasks)?d.tasks:[];
+  state.events=Array.isArray(d.events)?d.events:[];
+  state.oneThing=d.oneThing||'';
+  state.wizardDate=d.wizardDate||'';
+  state.wizardDone=(d.wizardDone&&d.wizardDate===todayStr())||false;
+  state.googleToken=d.googleToken||null;
+  state.googleTokenExpiry=d.googleTokenExpiry||0;
+  state.lastDriveCheck=d.lastDriveCheck||'';
+  state.processedDriveFiles=d.processedDriveFiles||[];
+  if(d.settings)Object.assign(state.settings,d.settings);
+  if(!state.settings.openai_key)state.settings.openai_key='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';
+  if(!state.settings.google_client_id)state.settings.google_client_id='208315653524-777sbqgaukshcnolb7rmhgbas41qvtvc.apps.googleusercontent.com';
+}
+function load(){
+  const raw=localStorage.getItem('den_v3');
+  if(!raw){seedInitial();return;}
+  try{applyLoadedData(JSON.parse(raw));}
+  catch(e){console.warn('Den: localStorage parse error.',e);}
+}
+async function loadFromServer(){
+  // Pull from disk via webhook server — more reliable than localStorage
+  try{
+    const res=await fetch('http://localhost:9090/data',{signal:AbortSignal.timeout(3000)});
+    if(!res.ok)return;
+    const d=await res.json();
+    if(!d||!Array.isArray(d.tasks))return;
+    // Use server copy if it has more tasks, or if localStorage was empty
+    const lsTasks=state.tasks.length;
+    if(d.tasks.length>lsTasks){
+      applyLoadedData(d);
+      // Mirror back to localStorage
+      try{localStorage.setItem('den_v3',JSON.stringify(d));}catch(e){}
+      renderAll();renderSchedule();renderCalendar();
+      console.log(`[Den] Loaded ${d.tasks.length} tasks from disk (localStorage had ${lsTasks})`);
+    }
+  }catch(e){
+    // Server not running — silent fail, localStorage copy is fine
+  }
+}
+function seedInitial(){
+  state.events=[{id:uid(),title:'Orange Theory Fitness',date:todayStr(),time:'5:30 AM',end:'6:30 AM',color:'#ff453a',source:'local'}];
+  state.tasks=[
+    mkS('Rebuild real estate database — start with past clients','real-estate','high','Target 5 contacts per day.','Real estate is your #1 priority and primary path to $300K GCI.'),
+    mkS('Set GCI milestones for Q2','real-estate','high','Break $300K into quarterly targets.','Without milestones you cannot measure the rebuild.'),
+    mkS('Consumer proposal — review next payment schedule','finance','high','','Financial discipline is non-negotiable. You know why.'),
+    mkS('Prep Burn The Sky for May 24 weekend','burn-the-sky','med','Inventory, logistics, permits.','May 24 is a fixed window. Miss it and you wait a full year.'),
+    mkS('File small claims court — car engine dispute','personal','med','Auto shop damaged engine.','You mentioned this January 1. It has been sitting.'),
+    mkS('Post daily accountability video update','personal','med','','You committed to this publicly.'),
+    mkS('Create real estate marketing plan for Q2','real-estate','med','','No plan = no pipeline.'),
+    mkS('Research Burn The Sky growth strategy','burn-the-sky','low','Target $1M valuation by year end.','Part of your $1M net worth goal.'),
+  ];
+  save();
+}
+function mkS(title,project,priority,notes,importanceNote){return{id:uid(),title,project,priority,status:'todo',waitingOn:'',notes,due:'',tags:[],created:Date.now(),completed:null,suggested:true,importanceNote};}
+// ── UTILS ────────────────────────────────────────────────
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+function fmtDate(s){if(!s)return'';return new Date(s+'T12:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'})}
+function isOverdue(s){return s&&s<todayStr()}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function proj(id){return PROJECTS.find(p=>p.id===id)||{name:id,color:'#888'}}
+function getSetting(k){return state.settings[k]||getCookieSetting(k)||''}
+function setCookieSetting(k,v){document.cookie=`den_${k}=${encodeURIComponent(v)};max-age=31536000;path=/`;}
+function getCookieSetting(k){const m=document.cookie.match(new RegExp('(?:^|; )den_'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):'';}
+function refreshQuote(){
+  const qi=Math.floor(Math.random()*QUOTES.length);
+  const bi=Math.floor(Math.random()*BC_IMAGES.length);
+  const qEl=document.getElementById('wiz-quote');
+  const aEl=document.getElementById('wiz-attr');
+  const bgEl=document.getElementById('quote-bg-img');
+  if(qEl)qEl.textContent=`"${QUOTES[qi].t}"`;
+  if(aEl)aEl.textContent=`— ${QUOTES[qi].a}`;
+  if(bgEl)bgEl.style.backgroundImage=`url('${BC_IMAGES[bi]}')`;
+}
+function fmtTime(dt){return dt.toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit',hour12:true})}
+function fmtMins(m){if(m<60)return m+'m';const h=Math.floor(m/60),r=m%60;return h+'h'+(r?r+'m':'')}
+// ── CLOCK ────────────────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock-d').textContent=n.toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+setInterval(updateClock,1000);updateClock();
+// ── WIZARD ───────────────────────────────────────────────
+const STEPS=['checkin','quote','meditation','journal','onething','calendar'];
+function initWizard(){
+  document.getElementById('wizard-date').textContent=new Date().toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const qi=Math.floor(Math.random()*QUOTES.length);
+  document.getElementById('wiz-quote').textContent=`"${QUOTES[qi].t}"`;
+  document.getElementById('wiz-attr').textContent=`— ${QUOTES[qi].a}`;
+  const bi=Math.floor(Math.random()*BC_IMAGES.length);
+  document.getElementById('quote-bg-img').style.backgroundImage=`url('${BC_IMAGES[bi]}')`;
+  renderWizardCal();
+  if(state.wizardDone){showPostWizard();return;}
+  showStep(0);
+}
+function showStep(i){
+  state.wizardStep=i;
+  STEPS.forEach((s,j)=>{
+    const el=document.getElementById('step-'+s);
+    if(el)el.classList.toggle('active',j===i);
+  });
+}
+function nextStep(){showStep(state.wizardStep+1);}
+function setOneThing(){
+  const val=document.getElementById('one-thing-input').value.trim();
+  if(!val)return;
+  state.oneThing=val;save();nextStep();
+}
+function finishWizard(){
+  state.wizardDone=true;state.wizardDate=todayStr();save();
+  if(isGConnected()){syncCalendar();fetchDriveTranscripts();}
+  showPostWizard();
+}
+function showPostWizard(){
+  document.getElementById('wizard-wrap').style.display='none';
+  const pw=document.getElementById('post-wizard');
+  pw.style.display='flex';
+  document.getElementById('focus-display').textContent=state.oneThing||'(No One Thing set yet)';
+  if(state.oneThing){
+    const sf=document.getElementById('sched-focus');
+    sf.textContent='Focus: '+state.oneThing;sf.style.display='block';
+  }
+}
+function renderWizardCal(){
+  const today=todayStr();
+  const evs=state.events.filter(e=>e.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  const el=document.getElementById('wizard-cal-events');
+  el.innerHTML=evs.length?evs.map(e=>`<div class="cal-event-step"><div class="cal-bar" style="background:${e.color||'#4a9eff'}"></div><div class="cal-time-text">${esc(e.time)}</div><div class="cal-title-text">${esc(e.title)}</div></div>`).join(''):`<div style="color:var(--text3);font-size:14px;padding:16px 0">No events today. Add one or sync your calendar.</div>`;
+}
+function toggleCheckin(k){state.checkin[k]=!state.checkin[k];document.getElementById('tog-'+k).classList.toggle('on',state.checkin[k]);}
+// ── TIMER ────────────────────────────────────────────────
+function startTimer(which,totalSecs){
+  const timeEl=document.getElementById(which+'-time');
+  const ringEl=document.getElementById(which+'-ring');
+  const btnEl=document.getElementById(which+'-start-btn');
+  const circ=which==='med'?439.8:263.9;
+  let secs=totalSecs,interval=null;
+  if(which==='med'&&medTimer){clearInterval(medTimer);}
+  if(which==='jour'&&jourTimer){clearInterval(jourTimer);}
+  btnEl.textContent='Pause';
+  function tick(){
+    secs--;
+    const m=Math.floor(secs/60),s=secs%60;
+    timeEl.textContent=`${m}:${String(s).padStart(2,'0')}`;
+    ringEl.style.strokeDashoffset=circ*(secs/totalSecs);
+    if(secs<=0){clearInterval(interval);btnEl.textContent='Done';btnEl.disabled=true;}
+  }
+  interval=setInterval(tick,1000);
+  if(which==='med')medTimer=interval;else jourTimer=interval;
+  btnEl.onclick=()=>{if(interval){clearInterval(interval);interval=null;btnEl.textContent='Resume';btnEl.onclick=()=>startTimer(which,secs);}};
+}
+// ── GOOGLE AUTH ──────────────────────────────────────────
+function initGoogleAuth(){
+  const cid=getSetting('google_client_id');
+  if(!cid||!window.google)return;
+  try{
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:cid,
+      scope:'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.readonly',
+      callback:(resp)=>{
+        if(resp.error)return;
+        state.googleToken=resp.access_token;
+        state.googleTokenExpiry=Date.now()+(resp.expires_in*1000);
+        save();
+        document.getElementById('cal-btn').classList.add('connected');
+        document.getElementById('drive-btn').classList.add('connected');
+        addFlintMsg('sys','Google connected.');
+        syncCalendar();
+      },
+    });
+  }catch(e){}
+}
+function isGConnected(){return state.googleToken&&state.googleTokenExpiry>Date.now()}
+function connectGoogle(){if(!tokenClient){addFlintMsg('flint','Add your Google OAuth Client ID in Settings first.');return;}tokenClient.requestAccessToken();}
+function handleCalSync(){isGConnected()?syncCalendar():connectGoogle();}
+function handleDriveSync(){isGConnected()?fetchDriveTranscripts():connectGoogle();}
+// ── CALENDAR API ─────────────────────────────────────────
+async function syncCalendar(){
+  if(!isGConnected())return;
+  const now=new Date();
+  const start=new Date(now);start.setHours(0,0,0,0);
+  const end=new Date(now);end.setHours(23,59,59,999);
+  const timeMin=start.toISOString();
+  const timeMax=end.toISOString();
+  try{
+    const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,{headers:{Authorization:`Bearer ${state.googleToken}`}});
+    const d=await r.json();
+    if(d.error){if(d.error.code===401){state.googleToken=null;save();connectGoogle();}return;}
+    const evs=(d.items||[]).map(e=>({id:e.id,title:e.summary||'Event',date:todayStr(),time:e.start.dateTime?fmtTimeISO(e.start.dateTime):'All Day',end:e.end.dateTime?fmtTimeISO(e.end.dateTime):'',color:'#4a9eff',source:'google'}));
+    state.events=[...state.events.filter(e=>e.source!=='google'),...evs];
+    save();renderWizardCal();renderSchedule();renderCalendar();
+    addFlintMsg('sys',`Calendar synced. ${evs.length} event${evs.length!==1?'s':''} today.`);
+  }catch(e){addFlintMsg('flint','Calendar sync error. Try reconnecting Google.');}
+}
+function fmtTimeISO(iso){const d=new Date(iso);return d.toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit',hour12:true});}
+// ── DRIVE API ────────────────────────────────────────────
+async function fetchDriveTranscripts(){
+  if(!isGConnected())return;
+  state.lastDriveCheck=todayStr();save();
+  addFlintMsg('flint','Checking Drive for new Fieldy transcripts...');
+  try{
+    const fr=await fetch(`https://www.googleapis.com/drive/v3/files?q=name%3D'Transcripts'+and+mimeType%3D'application%2Fvnd.google-apps.folder'+and+trashed%3Dfalse&fields=files(id,name)`,{headers:{Authorization:`Bearer ${state.googleToken}`}});
+    const fd=await fr.json();
+    if(!fd.files?.length){addFlintMsg('flint','No "Transcripts" folder in Drive.');return;}
+    const fid=fd.files[0].id;
+    const lr=await fetch(`https://www.googleapis.com/drive/v3/files?q='${fid}'+in+parents+and+trashed%3Dfalse&orderBy=modifiedTime+desc&fields=files(id,name,modifiedTime,mimeType)&pageSize=20`,{headers:{Authorization:`Bearer ${state.googleToken}`}});
+    const ld=await lr.json();
+    const done=new Set(state.processedDriveFiles);
+    const unread=(ld.files||[]).filter(f=>!done.has(f.id));
+    if(!unread.length){addFlintMsg('flint','No new transcripts. All caught up.');return;}
+    let all=[];
+    for(const f of unread.slice(0,5)){
+      const txt=await readDriveFile(f);if(!txt)continue;
+      const items=await parseTranscriptContent(txt,f.name);all.push(...items);done.add(f.id);
+    }
+    state.processedDriveFiles=[...done];save();
+    if(!all.length){addFlintMsg('flint','Processed transcripts, no actionable items found.');return;}
+    extractedCache=all;
+    showDriveResults(all,unread.length);
+  }catch(e){addFlintMsg('flint','Drive access failed.');}
+}
+async function readDriveFile(f){
+  try{
+    const url=f.mimeType==='application/vnd.google-apps.document'?`https://www.googleapis.com/drive/v3/files/${f.id}/export?mimeType=text/plain`:`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`;
+    const r=await fetch(url,{headers:{Authorization:`Bearer ${state.googleToken}`}});
+    return await r.text();
+  }catch(e){return null;}
+}
+function showDriveResults(items,fileCount){
+  const groups={task:[],event:[],contact:[],commit:[],waiting:[],idea:[]};
+  items.forEach(i=>{(groups[i.type]||groups.idea).push(i);});
+  const labels={task:'Priority Actions',event:'Calendar Events',contact:'Contacts',commit:'Commitments',waiting:'Waiting On',idea:'Ideas'};
+  let html=`<div class="card"><div class="card-header"><span class="card-title">Drive Import &mdash; ${fileCount} file${fileCount!==1?'s':''}</span><button class="card-action" onclick="importDriveItems()">Import Selected</button></div><div id="drive-items">`;
+  Object.entries(groups).forEach(([type,arr])=>{
+    if(!arr.length)return;
+    html+=`<div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:8px 0 5px;border-top:1px solid var(--border-card);margin-top:6px">${labels[type]||type}</div>`;
+    arr.forEach(item=>{
+      html+=`<div class="ex-item"><input type="checkbox" id="di-${item.id}" checked style="cursor:pointer;margin-top:3px"><span class="ex-type et-${item.type}">${item.type}</span><textarea class="ex-text-input" id="dt-${item.id}" rows="1" style="font-size:14px">${esc(item.text)}</textarea><select id="dp-${item.id}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px;flex-shrink:0">${PROJECTS.map(p=>`<option value="${p.id}" ${p.id===item.project?'selected':''}>${p.name}</option>`).join('')}</select></div>`;
+    });
+  });
+  html+='</div></div>';
+  const el=document.getElementById('drive-results');el.innerHTML=html;
+}
+function importDriveItems(){
+  let count=0;
+  extractedCache.forEach(item=>{
+    const cb=document.getElementById('di-'+item.id);if(!cb?.checked)return;
+    const title=document.getElementById('dt-'+item.id)?.value.trim()||item.text;
+    const project=document.getElementById('dp-'+item.id)?.value||item.project;
+    if(!title)return;
+    addTask({title,project,priority:item.priority||'med',status:item.type==='waiting'?'waiting':'todo',waitingOn:item.waitingOn||'',tags:item.type==='commit'?['commitment']:[]});
+    count++;
+  });
+  if(count)addFlintMsg('sys',`Imported ${count} item${count!==1?'s':''}.`);
+  document.getElementById('drive-results').innerHTML='';
+}
+// ── SMART SCHEDULE ────────────────────────────────────────
+function parseTimeStr(str){
+  if(!str||str==='All Day')return null;
+  const m=str.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return null;
+  let h=parseInt(m[1]),mn=parseInt(m[2]);
+  const ap=m[3].toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12;
+  if(ap==='AM'&&h===12)h=0;
+  const d=new Date();d.setHours(h,mn,0,0);return d;
+}
+function buildSchedule(){
+  const now=new Date();
+  const today=todayStr();
+  const evs=state.events.filter(e=>e.date===today).map(e=>{
+    const s=parseTimeStr(e.time),en=e.end?parseTimeStr(e.end):null;
+    return{...e,startDt:s,endDt:en||(s?new Date(s.getTime()+3600000):null)};
+  }).filter(e=>e.startDt).sort((a,b)=>a.startDt-b.startDt);
+  const tasks=state.tasks.filter(t=>t.status!=='done').sort((a,b)=>{
+    const po={high:0,med:1,low:2};
+    if(po[a.priority]!==po[b.priority])return po[a.priority]-po[b.priority];
+    const aov=a.due&&a.due<today?-2:a.due===today?-1:0;
+    const bov=b.due&&b.due<today?-2:b.due===today?-1:0;
+    return aov-bov;
+  });
+  const eod=new Date();eod.setHours(22,0,0,0);
+  const blocks=[];
+  let cursor=new Date(now);
+  let taskIdx=0;
+  const futureEvs=evs.filter(e=>e.endDt>now);
+  futureEvs.forEach(ev=>{
+    if(ev.startDt>cursor){
+      const freeMin=Math.floor((ev.startDt-cursor)/60000);
+      if(freeMin>=10){
+        const used=[],tmpIdx=taskIdx;
+        let rem=freeMin;
+        while(taskIdx<tasks.length&&rem>0){
+          used.push(tasks[taskIdx]);rem-=EST_MINS[tasks[taskIdx].priority]||20;taskIdx++;
+        }
+        blocks.push({type:'free',start:new Date(cursor),end:new Date(ev.startDt),minutes:freeMin,tasks:used});
+      }
+    }
+    blocks.push({type:'event',ev,start:ev.startDt,end:ev.endDt});
+    cursor=new Date(ev.endDt);
+  });
+  if(cursor<eod){
+    const rem=tasks.slice(taskIdx);
+    if(rem.length||!blocks.length)blocks.push({type:'free',start:new Date(cursor),end:eod,minutes:Math.floor((eod-cursor)/60000),tasks:rem});
+  }
+  return blocks;
+}
+function renderSchedule(){
+  const now=new Date();
+  document.getElementById('sched-now').textContent='Now: '+fmtTime(now);
+  const blocks=buildSchedule();
+  const body=document.getElementById('sched-body');
+  if(!blocks.length){body.innerHTML='<div class="sched-empty">No events or tasks yet.<br>Add events in the Den or sync your Calendar.</div>';return;}
+  let html='<div class="sched-now-line">NOW</div>';
+  blocks.forEach(b=>{
+    if(b.type==='event'){
+      const dur=b.end?Math.floor((b.end-b.start)/60000):60;
+      html+=`<div class="sched-event"><div class="sched-ev-bar" style="background:${b.ev.color||'#4a9eff'}"></div><div><div class="sched-ev-time">${fmtTime(b.start)}</div><div class="sched-ev-title">${esc(b.ev.title)}</div><div style="font-size:11px;color:var(--text3)">${fmtMins(dur)}</div></div></div>`;
+    }else{
+      const label=fmtTime(b.start)+(b.end?' &rarr; '+fmtTime(b.end):'')+' &nbsp;('+fmtMins(b.minutes)+' free)';
+      html+=`<div class="free-block"><div class="free-block-header">${label}</div>`;
+      if(b.tasks.length){
+        b.tasks.forEach(t=>{
+          const p=proj(t.project);
+          html+=`<div class="sched-task${t.suggested?' sched-pending':''}" data-id="${t.id}" onclick="openEditModal('${t.id}')">
+            <div class="sched-task-p p-${t.priority}"></div>
+            <div class="sched-task-body">
+              <div class="sched-task-title">${esc(t.title)}${t.suggested?' <span style="font-size:10px;color:var(--blue);opacity:.7">(pending approval)</span>':''}</div>
+              <div class="sched-task-proj" style="color:${p.color}">${esc(p.name)} &middot; ~${EST_MINS[t.priority]}m</div>
+            </div>
+            <div class="sched-task-actions">
+              <button class="sched-ta-btn sched-ta-edit" onclick="event.stopPropagation();openEditModal('${t.id}')" title="Edit">&#x270E;</button>
+              <button class="sched-ta-btn sched-ta-del" onclick="event.stopPropagation();deleteTask('${t.id}')" title="Delete">&#x2715;</button>
+            </div>
+          </div>`;
+        });
+      }else{
+        html+='<div class="sched-empty" style="padding:10px 0;font-size:12px">No tasks for this window</div>';
+      }
+      html+='</div>';
+    }
+  });
+  body.innerHTML=html;
+}
+// Auto-refresh schedule every minute + on visibility change
+setInterval(renderSchedule,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderSchedule();});
+
+// ── FLINT AI ─────────────────────────────────────────────
+function buildFlintSystem(){
+  const active=state.tasks.filter(t=>t.status!=='done');
+  return`You are Flint, Stu's personal AI operating partner built into The Den.
+
+Stu Smith, 54, entrepreneur in Oshawa, Ontario. 2026: rebuilding from zero after losing his cannabis analytics lab. Businesses: Real Estate (28 years, rebuilding database, GCI goal $300K), Burn The Sky Fireworks (seasonal, May 24 key), CarGoThenWeGo, Pumpkin Patch, UNSPUN. Runs Oshawa Liberal Riding Association. ADHD. Consumer proposal from lab bankruptcy. Goal: $1M net worth by Dec 31 2026. By 2028: relocate to Whistler or Kelowna.
+
+Project priority: Real Estate > CarGoThenWeGo > Burn The Sky > Pumpkin Patch > UNSPUN > Politics > Life Systems > Family > Ideas.
+
+Today's One Thing: ${state.oneThing||'not set'}.
+Active tasks: ${active.length}. Urgent: ${active.filter(t=>t.priority==='high').length}.
+Top priorities: ${active.filter(t=>t.priority==='high').slice(0,3).map(t=>t.title).join(', ')||'none'}.
+
+Rules: Short by default. No em dashes. Direct and human. No fluff. No corporate tone. Humor welcome. Call out risks. When Stu drifts, bring him back. Motivational but grounded. Ask "Does this belong in a project, or is this a search for enlightenment?" when unclear.`;
+}
+async function callFlintAPI(query){
+  const provider=getSetting('ai_provider')||'openai';
+  if(provider==='anthropic'){
+    const key=getSetting('anthropic_key');if(!key)return null;
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-opus-4-6',max_tokens:500,system:buildFlintSystem(),messages:[{role:'user',content:query}]})});
+      const d=await r.json();
+      if(d.error){addFlintMsg('sys',`API error: ${d.error.message||d.error.type||'Unknown error'}`);return null;}
+      return d.content?.[0]?.text||null;
+    }catch(e){addFlintMsg('sys',`Connection failed: ${e.message}. Check your internet connection.`);return null;}
+  }else{
+    const key=getSetting('openai_key');if(!key)return null;
+    try{
+      const msgs=state.flintMsgs.slice(-6).map(m=>({role:m.r==='user'?'user':'assistant',content:m.t.replace(/<[^>]+>/g,'')}));
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:'gpt-4o',messages:[{role:'system',content:buildFlintSystem()},...msgs,{role:'user',content:query}],max_tokens:500,temperature:0.7})});
+      const d=await r.json();
+      if(d.error){addFlintMsg('sys',`OpenAI error: ${d.error.message||d.error.code||'Unknown'}`);return null;}
+      return d.choices?.[0]?.message?.content||null;
+    }catch(e){addFlintMsg('sys',`Connection failed: ${e.message}. Check your internet connection.`);return null;}
+  }
+}
+async function testAPIKey(){
+  const provider=getSetting('ai_provider')||'openai';
+  const key=provider==='anthropic'?getSetting('anthropic_key'):getSetting('openai_key');
+  if(!key){addFlintMsg('flint','No API key saved. Open Settings and enter your key.');return;}
+  addFlintMsg('sys',`Testing ${provider==='anthropic'?'Anthropic':'OpenAI'} key (${key.slice(0,8)}...)...`);
+  try{
+    let ok=false,msg='';
+    if(provider==='anthropic'){
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-opus-4-6',max_tokens:20,messages:[{role:'user',content:'Say OK'}]})});
+      const d=await r.json();
+      ok=!!d.content?.[0]?.text;msg=d.error?`Error: ${d.error.message}`:`Connected. Model: claude-opus-4-6`;
+    }else{
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:'Say OK'}],max_tokens:5})});
+      const d=await r.json();
+      ok=!!d.choices?.[0]?.message?.content;msg=d.error?`Error: ${d.error.message}`:`Connected. Model: gpt-4o`;
+    }
+    addFlintMsg(ok?'sys':'flint',ok?`Key works. ${msg}`:`Key failed. ${msg}`);
+  }catch(e){addFlintMsg('flint',`Network error: ${e.message}`);}
+}
+function processFlint(raw){
+  if(!raw.trim())return;
+  state.flintMsgs.push({r:'user',t:raw});
+  addFlintMsg('user',esc(raw));
+  if(raw.toLowerCase()==='pause'){setFlintPaused(true);return;}
+  if(raw.toLowerCase()==='pineapple'){setFlintPaused(false);return;}
+  if(state.flintPaused)return;
+  if(isFieldy(raw)){addFlintMsg('flint','Fieldy transcript detected.');document.getElementById('t-input').value=raw;setTimeout(()=>{processManualTranscript();switchView('transcript');},200);return;}
+  if(isBulk(raw)){handleBulkPaste(raw);return;}
+  const low=raw.toLowerCase();
+  const addM=low.match(/^(add|create|new task[:\s]|remind me to|don'?t let me forget)\s+(.+)/i);
+  if(addM){const t=addTask({title:cleanTitle(raw.slice(addM[1].length).trim()),project:guessProj(raw),priority:guessPrio(raw)});reply(`Added to <strong>${proj(t.project).name}</strong>: <em>${esc(t.title)}</em>`);return;}
+  const doneM=low.match(/^(done|complete|finished|check off)[:\s]+(.+)/i);
+  if(doneM){const f=findTask(raw.slice(doneM[1].length+1).trim());if(f){toggleTask(f.id);reply(`Done: <em>${esc(f.title)}</em>`);}else reply(`Can't find that task.`);return;}
+  if(low.match(/\b(urgent|what should i|focus|top tasks?|priorities)\b/)){const u=state.tasks.filter(t=>t.priority==='high'&&t.status!=='done');if(!u.length){reply('No urgent tasks.');}else reply(`Urgent:<br>${u.slice(0,5).map((t,i)=>`${i+1}. ${esc(t.title)}`).join('<br>')}`);return;}
+  if(low.match(/\bwaiting on\b/)&&!low.match(/^(add|waiting on .+ for)/i)){const w=state.tasks.filter(t=>t.status==='waiting');reply(w.length?`${w.length} waiting:<br>${w.map(t=>esc(t.title)).join('<br>')}`:'Nothing in Waiting On.');return;}
+  // DIAGNOSTIC
+  if(low==='diagnose'||low==='diagnostic'||low==='status'){runDiagnostic();return;}
+  if(low==='test api'||low==='test flint'){testAPI();return;}
+  if(low.match(/^(run hard mode|audit mode|hard mode|re-extract in hard mode)$/)){veritasHardMode=true;reply('Hard Mode activated. Next transcript processed with <strong>no filtering</strong> — every actionable statement captured. Say <strong>normal mode</strong> to switch back.');return;}
+  if(low.match(/^(normal mode|exit hard mode)$/)){veritasHardMode=false;reply('Back to Normal Mode. Signal filtering active — direct commitments only.');return;}
+  if(low.match(/^(reset day|new day|restart day|fresh day)$/)){resetDay();return;}
+  if(low.match(/^(test fieldy|fieldy status|fieldy test|check fieldy)$/)){testFieldyConnection();return;}
+  if(low.match(/^(den|cockpit|morning)\b/)){switchView('den');reply('Opening the Den.');return;}
+  if(low.match(/^tasks?\b/)){switchView('tasks');reply("Here's your task list.");return;}
+  const found=findTask(raw);
+  if(found&&raw.length>8){
+    if(low.includes('done')||low.includes('complete')){toggleTask(found.id);reply(`Done: <em>${esc(found.title)}</em>`);}
+    else if(low.includes('urgent')){updateTask(found.id,{priority:'high'});reply(`Marked urgent.`);}
+    else if(low.includes('delete')||low.includes('remove')){deleteTask(found.id);reply(`Removed.`);}
+    else reply(`Found: <em>${esc(found.title)}</em>. Say "done", "urgent", or "delete".`);
+    return;
+  }
+  const hasKey=getSetting('openai_key')||getSetting('anthropic_key');
+  if(hasKey){
+    addFlintMsg('thinking','...');
+    callFlintAPI(raw).then(resp=>{document.querySelector('.msg-thinking')?.remove();if(resp){state.flintMsgs.push({r:'flint',t:resp});addFlintMsg('flint',resp);}else reply('Try: add [task], done [task], what\'s urgent, or paste a transcript.');});
+  }else{reply('Add an API key in Settings for full AI responses. Quick commands: <em>add [task]</em>, <em>done [task]</em>, <em>what\'s urgent</em>.');}
+}
+function reply(html){state.flintMsgs.push({r:'flint',t:html});addFlintMsg('flint',html);}
+function sendFlint(){const el=document.getElementById('flint-input');const v=el.value.trim();if(!v)return;processFlint(v);el.value='';el.style.height='auto';}
+function addFlintMsg(role,html){
+  const el=document.getElementById('flint-msgs');
+  const cls=role==='user'?'msg msg-user':role==='sys'?'msg msg-sys':role==='thinking'?'msg msg-flint':role==='flint'?'msg msg-flint':'msg msg-sys';
+  const label=role==='flint'?'<div class="msg-label">Flint</div>':'';
+  el.innerHTML+=`<div class="${cls}">${label}${html}</div>`;el.scrollTop=el.scrollHeight;
+}
+function setFlintPaused(p){state.flintPaused=p;document.getElementById('flint-dot').classList.toggle('paused',p);document.getElementById('flint-sub').textContent=p?'PAUSED':'Ready';addFlintMsg(p?'flint':'sys',p?'Paused. Say <strong>pineapple</strong> to resume.':'Back online.');}
+// ── BULK PASTE ───────────────────────────────────────────
+function isBulk(text){const lines=text.split('\n').filter(l=>l.trim().length>0);if(lines.length<4)return false;return lines.some(l=>/^\d+\.?$/.test(l.trim())||/^\d+[.)]\s/.test(l.trim()))||lines.filter(l=>/^[-•*]\s/.test(l.trim())).length>=3||lines.length>=8;}
+function handleBulkPaste(text){
+  const tasks=parseBulkText(text);if(!tasks.length){reply('Could not parse as a task list.');return;}
+  bulkTasksCache=tasks;
+  document.getElementById('bulk-count').textContent=`(${tasks.length} tasks)`;
+  document.getElementById('bulk-list').innerHTML=tasks.map((t,i)=>`<div class="bulk-item"><input type="checkbox" id="bl-${i}" checked style="cursor:pointer"><span class="bulk-title">${esc(t.title)}</span><select id="blp-${i}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px;max-width:120px">${PROJECTS.map(p=>`<option value="${p.id}" ${p.id===t.project?'selected':''}>${p.name}</option>`).join('')}</select><select id="blpr-${i}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px"><option value="high" ${t.priority==='high'?'selected':''}>Urgent</option><option value="med" ${t.priority==='med'?'selected':''}>Import</option><option value="low" ${t.priority==='low'?'selected':''}>Backlog</option></select></div>`).join('');
+  document.getElementById('bulk-modal').classList.add('show');
+}
+function parseBulkText(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);const tasks=[];let i=0;
+  while(i<lines.length){
+    const l=lines[i];
+    if(/^\d+\.?$/.test(l)){const title=lines[i+1];if(!title){i++;continue;}let project=guessProj(title),skip=2;if(lines[i+2]){const pm=PROJECTS.find(p=>p.name.toLowerCase()===lines[i+2].toLowerCase());if(pm){project=pm.id;skip=3;}}tasks.push({title,project,priority:guessPrio(title)});i+=skip;continue;}
+    const nm=l.match(/^\d+[.)]\s+(.+)/);if(nm){tasks.push({title:nm[1],project:guessProj(nm[1]),priority:guessPrio(nm[1])});i++;continue;}
+    if(/^[-•*]\s+/.test(l)){const t=l.replace(/^[-•*]\s+/,'');if(t.length>3)tasks.push({title:t,project:guessProj(t),priority:guessPrio(t)});i++;continue;}
+    const pm=PROJECTS.find(p=>p.name.toLowerCase()===l.toLowerCase());if(pm&&tasks.length){tasks[tasks.length-1].project=pm.id;i++;continue;}
+    if(l.length>8&&!/^\d+$/.test(l))tasks.push({title:l,project:guessProj(l),priority:guessPrio(l)});
+    i++;
+  }
+  return tasks;
+}
+function confirmBulkImport(){
+  let count=0,dupes=0;
+  const existing=new Set(state.tasks.map(t=>t.title.toLowerCase().trim()));
+  bulkTasksCache.forEach((t,i)=>{
+    const cb=document.getElementById(`bl-${i}`);if(!cb?.checked)return;
+    const title=(document.getElementById(`bl-${i}`)?.closest('.bulk-item')?.querySelector('.bulk-title')?.textContent||t.title).trim();
+    const project=document.getElementById(`blp-${i}`)?.value||t.project;
+    const priority=document.getElementById(`blpr-${i}`)?.value||t.priority;
+    const key=title.toLowerCase().trim();
+    if(existing.has(key)){dupes++;return;} // skip duplicates
+    existing.add(key);
+    state.tasks.push({id:uid(),title,project,priority,status:t.status||'todo',waitingOn:'',notes:'',due:'',tags:[],subfolder:t.subfolder||'',created:Date.now(),completed:null,suggested:false,importanceNote:''});
+    count++;
+  });
+  if(count){save();renderAll();renderSchedule();} // single save
+  closeModal('bulk-modal');
+  const msg=`Imported ${count} task${count!==1?'s':''}${dupes?` (${dupes} duplicates skipped)`:''}`;
+  addFlintMsg('sys',msg);
+  bulkTasksCache=[];
+}
+// ── TRANSCRIPT ───────────────────────────────────────────
+function isFieldy(text){
+  // Original Fieldy format: Date:/Time: header
+  if(/^.+\n(Date|Time):\s+\d/m.test(text.slice(0,300)))return true;
+  // Timestamped transcript format: [11:43:23 a.m.] Speaker: ...
+  if(/^\[\d{1,2}:\d{2}:\d{2}\s*[ap]\.m\.\]\s+\w/m.test(text.slice(0,600)))return true;
+  return false;
+}
+function isVeritasOutput(text){
+  // Has RTDL category names as headers AND bullet points underneath
+  const hasCategory=/\b(Real Estate|Burn The Sky|Pumpkin Patch|Family and Personal|House and Personal Finance|Life Systems|Legal and Admin|Waiting On|Appointments)\b/i.test(text);
+  const hasBullets=/^[•\-]\s+\S/m.test(text);
+  return hasCategory&&hasBullets;
+}
+function parseVeritasOutput(text){
+  const catMap={'real estate':'real-estate','burn the sky':'burn-the-sky','pumpkin patch':'pumpkin-patch','cargothenwego':'cargo','cargo':'cargo','unspun':'unspun','politics':'politics','family and personal':'family','house and personal finance':'finance','life systems and admin':'life-systems','life systems and admin':'life-systems','life systems':'life-systems','legal and admin':'legal','legal':'legal','waiting on':'waiting','appointments':'appointment'};
+  const items=[];const date=todayStr();
+  let currentProject='personal';let currentType='task';
+  for(const raw of text.split('\n')){
+    const line=raw.trim().replace(/\*\*/g,'').replace(/^#+\s*/,'');
+    if(!line)continue;
+    if(!/^[•\-\*]/.test(line)){
+      // Potential category header
+      const lc=line.toLowerCase().replace(/\s*\(empty\)\s*$/,'').trim();
+      for(const[key,pid]of Object.entries(catMap)){
+        if(lc===key||lc.startsWith(key)){
+          currentProject=pid;
+          currentType=pid==='waiting'?'waiting':pid==='appointment'?'event':'task';
+          break;
+        }
+      }
+      continue;
+    }
+    const taskText=line.replace(/^[•\-\*]\s+/,'').trim();
+    if(!taskText||taskText.length<5)continue;
+    if(/^(Approve|Reply|No tasks|Extracted)/i.test(taskText))continue;
+    items.push({id:uid(),type:currentType,text:taskText.slice(0,120),project:currentProject,
+      priority:V_HIGH_SIGNAL.test(taskText)?'high':'med',
+      waitingOn:currentType==='waiting'?taskText:'',subfolder:detectProperty(taskText),date,source:'veritas'});
+  }
+  return items;
+}
+// ── VERITAS EXTRACTION v3 (Normal Mode + Hard Mode) ──────
+// DNA rules: capture layer only. No inference. No advice. No filler.
+// Normal Mode: actionable commitments only. Prefer money/legal/deadline.
+// Hard Mode: no filtering, one task per statement.
+let veritasHardMode=false;
+
+// Concrete action verbs — task MUST start with or contain one of these
+const V_ACTION=/\b(call|email|contact|reach out to|send|submit|file|schedule|book|apply for|pay|sign|register|confirm|finalize|follow up|obtain|arrange|negotiate|list|close|purchase|sell|hire|deliver|request|forward|draft|order|pick up|drop off|meet with|review and|prepare and|update and|create and|setup|set up)\b/i;
+
+// First-person direct commitment at START of statement
+const V_COMMIT=/^(?:I(?:'ll| will| need to| must| have to| am going to| promised| committed to)|Need to|Will|Follow up|Going to)\b/i;
+
+// Signals that make a line actionable even without explicit commit verb
+const V_HIGH_SIGNAL=/\b(deadline|due date|court|legal|lawsuit|claim|contract|mortgage|offer|deposit|closing|commission|GCI|\$\d|dollar|payment|overdue|urgent|ASAP|tonight|tomorrow|this week|by [A-Z])\b/i;
+
+// Hard exclude — these lines are never tasks in Normal Mode
+const V_BANTER=/\b(haha|lol|that's funny|that's great|sounds good|no problem|for sure|absolutely|of course|you're welcome|nice to meet|good morning|good evening|good night|good luck|take care|talk later|bye|thanks|thank you|congrats|congratulations|i agree|i think that|i feel like|i wonder|i believe|maybe|perhaps|might want to|could be|should probably|apparently|supposedly|they say|rumour|heard that|not sure|don't know|who knows)\b/i;
+
+// Past-tense indicators — something that already happened (not a task)
+const V_PAST=/\b(was|were|had|gave|received|got|went|came|made|said|told|called|emailed|sent|filed|signed|paid|met|finished|completed|done|already)\b/i;
+
+// ── VERITAS AI EXTRACTION ────────────────────────────────
+async function extractWithAI(rawTranscript){
+  const provider=getSetting('ai_provider')||'openai';
+  const key=provider==='anthropic'?getSetting('anthropic_key'):getSetting('openai_key');
+  if(!key)return null;
+  const sys=`You are Veritas: The Memory Miner — Stu Smith's task extraction engine for his Rolling To Do List (RTDL).
+
+Stu is a 54-year-old entrepreneur in Oshawa, Ontario. His projects: Real Estate (rebuilding, GCI goal $300K), Burn The Sky Fireworks, CarGoThenWeGo, Pumpkin Patch, Unspun, Oshawa Liberal Riding Association, and personal life.
+
+EXTRACT: Actionable commitments, promises, deadlines, appointments, and "waiting on" items only.
+SKIP: banter, small talk, opinions, hypotheticals, past-tense reports, filler phrases ("sounds good", "for sure", "I think", "maybe", "might").
+
+RTDL CATEGORIES — map every task to exactly one:
+real-estate | burn-the-sky | pumpkin-patch | cargo | unspun | politics | family | finance | life-systems | legal | waiting | appointment
+
+NORMAL MODE RULES:
+- Direct commitments: "I'll call", "I need to", "follow up with", "book", "schedule"
+- High-signal items: deadlines, legal, court, mortgage, payment, closing, GCI, $dollar amounts
+- Appointments: must have WHO + WHEN (day/time)
+- Waiting On: items pending FROM other people — not Stu's own tasks
+- Contacts: include inline if tied to a task, e.g. "Call Alex (Planner – alex@email.ca)"
+- Synthesize related statements into ONE clear task — do not repeat
+
+OUTPUT: Return ONLY a valid JSON array. No commentary, no markdown fences.
+[{"text":"task description max 100 chars","category":"category-id","type":"task|waiting|event","priority":"high|med"}]
+priority=high if: deadline, legal/court, financial, overdue, ASAP.`;
+
+  const msg=`Extract actionable RTDL items from this transcript:\n\n${rawTranscript.slice(0,8000)}`;
+  try{
+    let txt;
+    if(provider==='anthropic'){
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-opus-4-6',max_tokens:2000,system:sys,messages:[{role:'user',content:msg}]})});
+      const d=await r.json();txt=d.content?.[0]?.text;
+    }else{
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:'gpt-4o',messages:[{role:'system',content:sys},{role:'user',content:msg}],max_tokens:2000,temperature:0.1})});
+      const d=await r.json();txt=d.choices?.[0]?.message?.content;
+    }
+    if(!txt)return null;
+    const match=txt.match(/\[[\s\S]*\]/);if(!match)return null;
+    const parsed=JSON.parse(match[0]);
+    const date=todayStr();
+    return parsed.filter(i=>i.text&&i.text.length>4).map(i=>({
+      id:uid(),type:i.type||'task',text:i.text.slice(0,120),
+      project:i.category||guessProj(i.text),priority:i.priority||'med',
+      waitingOn:i.type==='waiting'?i.text:'',subfolder:detectProperty(i.text),date,source:'veritas-ai'
+    }));
+  }catch(e){return null;}
+}
+
+function passesNormalFilter(text){
+  if(!text||text.length<10)return false;
+  if(V_BANTER.test(text))return false;
+  // Must have an action signal — either explicit commit, action verb, or high-signal keyword
+  const hasCommit=V_COMMIT.test(text);
+  const hasAction=V_ACTION.test(text);
+  const hasSignal=V_HIGH_SIGNAL.test(text);
+  if(!hasCommit&&!hasAction&&!hasSignal)return false;
+  // If it only matches past-tense verbs with no forward-looking action, skip
+  if(V_PAST.test(text)&&!hasCommit&&!hasSignal)return false;
+  // Minimum specificity: must be longer than a vague stub
+  if(text.split(' ').length<4)return false;
+  return true;
+}
+
+async function parseTranscriptContent(raw,filename){
+  // Try AI extraction first — matches Veritas quality
+  addFlintMsg('sys','Running Veritas extraction...');
+  const aiItems=await extractWithAI(raw);
+  if(aiItems&&aiItems.length>0){
+    addFlintMsg('sys',`Veritas: ${aiItems.length} item${aiItems.length!==1?'s':''} extracted via AI.`);
+    return aiItems;
+  }
+  // Fallback to regex if no API key
+  addFlintMsg('sys','No API key — using regex filter (add key in Settings for full Veritas quality).');
+  return parseTranscriptRegex(raw,filename);
+}
+function parseTranscriptRegex(raw,filename){
+  const items=[];
+  const date=raw.match(/Date:\s+(\d{4}-\d{2}-\d{2})/)?.[1]||todayStr();
+  const seen=new Set();
+  function dedup(text){
+    const k=text.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,35);
+    if(seen.has(k))return false;seen.add(k);return true;
+  }
+
+  // 1. DELTA commands — explicit voice flags, always captured, always high priority
+  const deltaRe=/\bDELTA[:\s,]+([^\n\r]{5,120})/gi;
+  let dm;
+  while((dm=deltaRe.exec(raw))!==null){
+    const text=dm[1].trim().replace(/^[•\-\*"']\s*/,'').replace(/[.!?]+$/,'');
+    if(text.length>4&&dedup(text)){
+      items.push({id:uid(),type:'task',text:text.slice(0,120),
+        project:mapCategory(text)||guessProj(text),priority:'high',
+        waitingOn:'',subfolder:detectProperty(text),date,source:'delta'});
+    }
+  }
+
+  // 2. NOTES section — primary extraction source in Normal Mode
+  // Fieldy already summarises here. Each bullet still must pass the action filter.
+  const notes=raw.match(/NOTES\s*\n([\s\S]*?)(?=TRANSCRIPT|$)/i)?.[1]||'';
+  notes.split('\n').forEach(line=>{
+    const l=line.trim().replace(/^\*\*|\*\*$/g,'').replace(/^[-•*]\s+/,'');
+    if(!l||l.startsWith('#')||l.length<10)return;
+    if(!veritasHardMode&&!passesNormalFilter(l))return;
+    const type=V_WAIT.test(l)?'waiting':V_APPT.test(l)?'event':'task';
+    const waitingOn=type==='waiting'?(l.match(/(?:waiting (?:for|on)|following up with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)||[])[1]||'':'';
+    const item={id:uid(),type,text:l.slice(0,120),
+      project:mapCategory(l)||guessProj(l),
+      priority:V_HIGH_SIGNAL.test(l)?'high':'med',
+      waitingOn,subfolder:detectProperty(l),date,source:'notes'};
+    if(dedup(item.text))items.push(item);
+  });
+
+  // 3. TRANSCRIPT — ONLY Stu's first-person commitment lines
+  // Must start with a commitment phrase. No banter. No past-tense only.
+  const transcript=raw.match(/TRANSCRIPT\s*\n([\s\S]*?)$/i)?.[1]||'';
+  transcript.split('\n').forEach(line=>{
+    const m=line.match(/\]\s*(?:user|Stu)[:\s]+(.+)/i);
+    if(!m)return;
+    const text=m[1].trim();
+    if(!veritasHardMode){
+      if(!V_COMMIT.test(text))return; // TRANSCRIPT: commitment phrase required
+      if(V_BANTER.test(text))return;
+      if(text.length<15)return;
+    }
+    const clean=text.replace(/\s+/g,' ').slice(0,120);
+    const item=classifyItem(clean,date);
+    if(item&&dedup(item.text))items.push(item);
+  });
+
+  // 4. Appointments — only if date/time AND person/place both present
+  const V_APPT_FULL=/\b(?:meeting|appointment|showing|session|interview|call)\s+with\s+\w+[^\n]*(?:on|at)\s+(?:[A-Z][a-z]+ \d+|\w+day|\d{1,2}(?::\d{2})?\s*(?:am|pm))/gi;
+  let am;
+  while((am=V_APPT_FULL.exec(notes))!==null){
+    const text=am[0].trim().slice(0,120);
+    if(dedup(text))items.push({id:uid(),type:'event',text,
+      project:guessProj(text),priority:'high',waitingOn:'',subfolder:'',date,source:'appt'});
+  }
+
+  return items;
+}
+// Reusable signals for classifyItem
+const V_WAIT=/\b(waiting (?:for|on)|following up with|pending from|blocked by)\b/i;
+const V_APPT=/\b(meeting|appointment|showing|session|interview)\b/i;
+function classifyItem(text,date){
+  // In Normal Mode, apply the strict filter before classifying
+  if(!veritasHardMode&&!passesNormalFilter(text))return null;
+  let type='task';
+  if(V_WAIT.test(text))type='waiting';
+  else if(V_APPT.test(text)&&/\bwith\b/i.test(text))type='event';
+  else if(/\b(idea|consider|potential)\b/i.test(text)&&!V_ACTION.test(text))type='idea';
+  let waitingOn='';
+  if(type==='waiting'){const wm=text.match(/(?:waiting (?:for|on)|following up with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);if(wm)waitingOn=wm[1];}
+  const subfolder=detectProperty(text);
+  const priority=V_HIGH_SIGNAL.test(text)?'high':'med';
+  return{id:uid(),type,text:text.slice(0,120),project:mapCategory(text)||guessProj(text),priority,waitingOn,subfolder,date};
+}
+async function processManualTranscript(){
+  const raw=document.getElementById('t-input').value.trim();if(!raw){addFlintMsg('flint','Paste a transcript first.');return;}
+  extractedCache=await parseTranscriptContent(raw,'manual');
+  if(!extractedCache.length){addFlintMsg('flint','No actionable items found. Try Hard Mode or check that the transcript has content.');return;}
+  const wrap=document.getElementById('t-results');const list=document.getElementById('t-extracted-list');wrap.style.display='block';
+  list.innerHTML=extractedCache.map(item=>`<div class="ex-item"><input type="checkbox" id="ex-${item.id}" checked style="cursor:pointer;margin-top:3px"><span class="ex-type et-${item.type}">${item.type}</span><textarea class="ex-text-input" id="ext-${item.id}" rows="1" style="font-size:14px">${esc(item.text)}</textarea><select id="exp-${item.id}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px;flex-shrink:0">${PROJECTS.map(p=>`<option value="${p.id}" ${p.id===item.project?'selected':''}>${p.name}</option>`).join('')}</select></div>`).join('');
+  addFlintMsg('flint',`Extracted ${extractedCache.length} item${extractedCache.length!==1?'s':''}. Review in Transcript tab.`);
+}
+function importExtracted(listId){
+  let count=0;
+  extractedCache.forEach(item=>{
+    const cb=document.getElementById('ex-'+item.id);if(!cb?.checked)return;
+    const title=document.getElementById('ext-'+item.id)?.value.trim()||item.text;
+    const project=document.getElementById('exp-'+item.id)?.value||item.project;
+    if(!title)return;addTask({title,project,priority:item.priority||'med',status:item.type==='waiting'?'waiting':'todo',tags:item.type==='commit'?['commitment']:[]});count++;
+  });
+  if(count)addFlintMsg('sys',`Imported ${count} item${count!==1?'s':''}.`);
+  document.getElementById('t-results').style.display='none';extractedCache=[];
+}
+// ── FILE UPLOAD ──────────────────────────────────────────
+async function handleFileUpload(file){
+  if(!file)return;const ext=file.name.split('.').pop().toLowerCase();
+  addFlintMsg('sys',`Loading ${esc(file.name)}...`);
+  try{
+    if(ext==='xlsx'||ext==='xls')await handleExcel(file);
+    else if(ext==='docx'||ext==='doc')await handleDocx(file);
+    else{const text=await readTextSmart(file);dispatchFileContent(text,file.name);}
+  }catch(e){addFlintMsg('flint',`Could not read file: ${e.message||'error'}`);}
+  document.getElementById('flint-file').value='';
+}
+async function readTextSmart(file){const buf=await file.arrayBuffer();const b=new Uint8Array(buf);if(b[0]===0xFF&&b[1]===0xFE)return new TextDecoder('utf-16le').decode(buf.slice(2));if(b[0]===0xFE&&b[1]===0xFF)return new TextDecoder('utf-16be').decode(buf.slice(2));if(b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF)return new TextDecoder('utf-8').decode(buf.slice(3));try{return new TextDecoder('utf-8',{fatal:true}).decode(buf);}catch(e){return new TextDecoder('windows-1252').decode(buf);}}
+async function handleExcel(file){
+  if(!window.XLSX){addFlintMsg('flint','Excel library loading. Try again.');return;}
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const tasks=[];
+  wb.SheetNames.forEach(name=>{
+    const ws=wb.Sheets[name];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(rows.length<2)return;
+    const headers=rows[0].map(h=>String(h).toLowerCase().trim());
+    // Find columns by header name
+    const taskI=headers.findIndex(h=>h.match(/^task$|^title$|^name$|^description$|^item$/));
+    const catI=headers.findIndex(h=>h.match(/^cat(egory)?$|^project$|^area$/));
+    const topicI=headers.findIndex(h=>h.match(/^topic$|^subfolder$|^property$|^group$/));
+    const delI=headers.findIndex(h=>h.match(/^del(ete)?$/));
+    const pendI=headers.findIndex(h=>h.match(/^pending$|^wait/));
+    const prioI=headers.findIndex(h=>h.match(/^priority$|^prio$/));
+    // Fallback: if no category header found, assume col 0=category, col 1=task
+    const effCatI=catI>=0?catI:0;
+    const effTaskI=taskI>=0?taskI:(catI>=0?1:1);
+    rows.slice(1).forEach(row=>{
+      // Skip rows flagged for deletion
+      const del=String(delI>=0?row[delI]:'').toLowerCase().trim();
+      if(del==='x'||del==='yes'||del==='delete'||del==='1')return;
+      const rawTitle=String(row[effTaskI]||'').trim().replace(/^[•\-\*]\s*/,'');
+      if(rawTitle.length<3)return;
+      const cat=String(row[effCatI]||'').trim();
+      const pending=String(pendI>=0?row[pendI]:'').toLowerCase().trim()==='x';
+      const prioRaw=String(prioI>=0?row[prioI]:'').toLowerCase().trim();
+      const priority=prioRaw==='high'?'high':prioRaw==='low'?'low':'med';
+      // Use category column first, fall back to guessing from task text
+      const rawProject=mapCategory(cat)||guessProj(rawTitle);
+      const isWaiting=rawProject==='__waiting__'||pending;
+      const isAppt=rawProject==='__appointment__';
+      const project=isWaiting||isAppt?guessProj(rawTitle)||'personal':rawProject;
+      const topic=String(topicI>=0?row[topicI]:'').trim();
+      tasks.push({title:rawTitle,project,priority,status:isWaiting?'waiting':'todo',subfolder:topic});
+    });
+  });
+  if(!tasks.length){addFlintMsg('flint','No tasks found in spreadsheet.');return;}
+  bulkTasksCache=tasks;
+  document.getElementById('bulk-count').textContent=`(${tasks.length} tasks)`;
+  document.getElementById('bulk-list').innerHTML=tasks.map((t,i)=>`<div class="bulk-item"><input type="checkbox" id="bl-${i}" checked style="cursor:pointer"><span class="bulk-title">${esc(t.title)}</span><select id="blp-${i}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px;max-width:120px">${PROJECTS.map(p=>`<option value="${p.id}" ${p.id===t.project?'selected':''}>${p.name}</option>`).join('')}</select><select id="blpr-${i}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px"><option value="high" ${t.priority==='high'?'selected':''}>Urgent</option><option value="med" ${t.priority==='med'?'selected':''}>Important</option><option value="low" ${t.priority==='low'?'selected':''}>Backlog</option></select></div>`).join('');
+  document.getElementById('bulk-modal').classList.add('show');
+}
+async function handleDocx(file){if(!window.mammoth){addFlintMsg('flint','Word library loading. Try again.');return;}const buf=await file.arrayBuffer();const result=await mammoth.extractRawText({arrayBuffer:buf});const text=result.value||'';if(!text.trim()){addFlintMsg('flint','Could not extract text from Word document.');return;}addFlintMsg('sys',`Text extracted from ${esc(file.name)}.`);dispatchFileContent(text,file.name);}
+function dispatchFileContent(text,filename){
+  if(!text?.trim()){addFlintMsg('flint','File is empty.');return;}
+  if(isFieldy(text)){
+    // Raw transcript — send to Transcript tab for processing
+    document.getElementById('t-input').value=text;
+    setTimeout(()=>{processManualTranscript();switchView('transcript');},100);
+  }else if(isVeritasOutput(text)){
+    // Veritas-formatted output — parse by category and show for approval
+    const items=parseVeritasOutput(text);
+    if(!items.length){addFlintMsg('flint','No tasks found in Veritas output.');return;}
+    extractedCache=items;
+    const wrap=document.getElementById('t-results');
+    const list=document.getElementById('t-extracted-list');
+    wrap.style.display='block';
+    list.innerHTML=items.map(item=>`<div class="ex-item"><input type="checkbox" id="ex-${item.id}" checked style="cursor:pointer;margin-top:3px"><span class="ex-type et-${item.type}">${item.type}</span><textarea class="ex-text-input" id="ext-${item.id}" rows="1" style="font-size:14px">${esc(item.text)}</textarea><select id="exp-${item.id}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 5px;flex-shrink:0">${PROJECTS.map(p=>`<option value="${p.id}" ${p.id===item.project?'selected':''}>${p.name}</option>`).join('')}</select></div>`).join('');
+    addFlintMsg('sys',`Veritas: ${items.length} task${items.length!==1?'s':''} parsed. Review in Transcript tab then click Import.`);
+    switchView('transcript');
+  }else if(isBulk(text)){
+    handleBulkPaste(text);
+  }else{
+    addFlintMsg('flint',`File loaded (${esc(filename)}). Processing...`);
+    processFlint(text.slice(0,4000));
+  }
+}
+// ── TASK CRUD ────────────────────────────────────────────
+function addTask(data){const t={id:uid(),title:data.title||'Untitled',project:data.project||'personal',priority:data.priority||'med',status:data.status||'todo',waitingOn:data.waitingOn||'',notes:data.notes||'',due:data.due||'',tags:data.tags||[],subfolder:data.subfolder||'',created:Date.now(),completed:null,suggested:data.suggested||false,importanceNote:data.importanceNote||''};state.tasks.push(t);save();renderAll();renderSchedule();return t;}
+function updateTask(id,data){const t=state.tasks.find(x=>x.id===id);if(!t)return;Object.assign(t,data);if(data.status==='done'&&!t.completed)t.completed=Date.now();save();renderAll();renderSchedule();return t;}
+function deleteTask(id){state.tasks=state.tasks.filter(t=>t.id!==id);save();renderAll();renderSchedule();}
+function toggleTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='done'?'todo':'done';t.completed=t.status==='done'?Date.now():null;save();renderAll();renderSchedule();if(t.status==='done')addFlintMsg('sys',`Done: ${esc(t.title)}`);}
+function findTask(s){if(!s||s.length<3)return null;const q=s.toLowerCase();const a=state.tasks.filter(t=>t.status!=='done');return a.find(t=>t.title.toLowerCase()===q)||a.find(t=>t.title.toLowerCase().startsWith(q))||a.find(t=>t.title.toLowerCase().includes(q))||a.find(t=>q.split(/\s+/).filter(w=>w.length>3).every(w=>t.title.toLowerCase().includes(w)))||null;}
+function guessProj(text){const t=text.toLowerCase();if(t.match(/\b(realtor|listing|buyer|seller|mls|property|mortgage|gci|lead|real estate|client)\b/))return'real-estate';if(t.match(/\b(fireworks?|burn the sky|pyro|may 24|diwali|sparkler|victoria day|retail fire)\b/))return'burn-the-sky';if(t.match(/\b(cargo|cargothen)\b/))return'cargo';if(t.match(/\b(pumpkin)\b/))return'pumpkin';if(t.match(/\b(unspun)\b/))return'unspun';if(t.match(/\b(politics|liberal|riding|election|mélanie|joly)\b/))return'politics';if(t.match(/\b(family|kids?|wife|son|daughter|ella|dental|cavity)\b/))return'family';if(t.match(/\b(finance|money|bank|proposal|debt|payment|expense|budget|tax|ohip|ambulance bill|small claims|legal)\b/))return'finance';if(t.match(/\b(life system|qr code|google review|accountability video|marathon|anniversary trip|haida gwaii|salmon fishing)\b/))return'life-systems';if(t.match(/\b(idea|concept|maybe|consider)\b/))return'ideas';return'personal';}
+// Maps spreadsheet/transcript category labels to project IDs
+function mapCategory(cat){
+  if(!cat)return null;
+  const c=cat.toLowerCase().trim();
+  if(c.match(/real.?estate/))return'real-estate';
+  if(c.match(/burn.?the.?sky|firework|pyro/))return'burn-the-sky';
+  if(c.match(/cargo/))return'cargo';
+  if(c.match(/pumpkin/))return'pumpkin';
+  if(c.match(/unspun/))return'unspun';
+  if(c.match(/politic|liberal|riding/))return'politics';
+  if(c.match(/life.?system|system.*admin|life.*admin/))return'life-systems';
+  if(c.match(/family/))return'family';
+  if(c.match(/house.*finance|personal.*finance|finance|financial/))return'finance';
+  if(c.match(/legal.*admin|legal/))return'legal';
+  if(c.match(/waiting.?on|waiting/))return'__waiting__';
+  if(c.match(/appointment/))return'__appointment__';
+  if(c.match(/idea/))return'ideas';
+  if(c.match(/personal/))return'personal';
+  return null;
+}
+// Detect a property address in task text and return as subfolder string
+function detectProperty(text){
+  const m=text.match(/\b(\d+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:St(?:reet)?|Ave(?:nue)?|Dr(?:ive)?|R(?:oa)?d|Blvd|Boulevard|Lane|Ln|Court|Ct|Way|Crescent|Cres|Place|Pl)\.?(?:\s+(?:North|South|East|West|N|S|E|W))?)\b/i);
+  return m?m[1].replace(/\s+/g,' ').trim():'';
+}
+// Format inline contact per Veritas: (Name – Role, contact)
+function extractInlineContact(context){
+  const m=context.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*[–\-]\s*([^,(]{3,30}?)(?:,\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}|\d{3}[-.\s]\d{3}[-.\s]\d{4}))?/);
+  if(!m)return'';
+  return`${m[1]} – ${m[2].trim()}${m[3]?', '+m[3]:''}`;
+}
+function guessPrio(text){const t=text.toLowerCase();if(t.match(/\b(urgent|asap|today|immediately|critical|must|deadline)\b/))return'high';if(t.match(/\b(soon|this week|important|need to)\b/))return'med';return'med';}
+function cleanTitle(t){return t.replace(/^(to\s+|that\s+|about\s+)/i,'').trim();}
+// ── RENDER ────────────────────────────────────────────────
+function renderSidebar(){
+  const active=state.tasks.filter(t=>t.status!=='done');
+  document.getElementById('sc-all').textContent=active.length;
+  document.getElementById('sc-urgent').textContent=active.filter(t=>t.priority==='high').length;
+  document.getElementById('sc-waiting').textContent=state.tasks.filter(t=>t.status==='waiting').length;
+  document.getElementById('sc-suggested').textContent=state.tasks.filter(t=>t.suggested).length;
+  document.getElementById('stat-done').textContent=state.tasks.filter(t=>t.status==='done').length;
+  document.getElementById('stat-rem').textContent=active.length;
+  let html='<div class="sb-label">Projects</div>';
+  PROJECTS.forEach(p=>{const n=state.tasks.filter(t=>t.project===p.id&&t.status!=='done').length;html+=`<div class="sb-item ${state.activeProject===p.id?'active':''}" data-project="${p.id}"><div class="sb-dot" style="background:${p.color}"></div>${esc(p.name)}<span class="sb-count" style="${n===0?'opacity:.3':''}">${n}</span></div>`;});
+  document.getElementById('sb-projects').innerHTML=html;bindSidebar();
+}
+function bindSidebar(){document.querySelectorAll('.sb-item[data-project]').forEach(el=>el.addEventListener('click',()=>{state.activeProject=el.dataset.project;document.querySelectorAll('.sb-item[data-project]').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(state.activeView!=='tasks')switchView('tasks');else renderTasks();}));}
+function renderTasks(){
+  let tasks=[...state.tasks];
+  if(state.activeProject==='__urgent__')tasks=tasks.filter(t=>t.priority==='high'&&t.status!=='done');
+  else if(state.activeProject==='__waiting__')tasks=tasks.filter(t=>t.status==='waiting');
+  else if(state.activeProject==='__suggested__')tasks=tasks.filter(t=>t.suggested);
+  else if(state.activeProject!=='all')tasks=tasks.filter(t=>t.project===state.activeProject);
+  const pf=state.activePriority;
+  if(pf==='high')tasks=tasks.filter(t=>t.priority==='high'&&t.status!=='done');
+  else if(pf==='med')tasks=tasks.filter(t=>t.priority==='med'&&t.status!=='done');
+  else if(pf==='low')tasks=tasks.filter(t=>t.priority==='low'&&t.status!=='done');
+  else if(pf==='waiting')tasks=tasks.filter(t=>t.status==='waiting');
+  else if(pf==='done')tasks=tasks.filter(t=>t.status==='done');
+  else tasks=tasks.filter(t=>t.status!=='done');
+  const po={high:0,med:1,low:2};
+  tasks.sort((a,b)=>po[a.priority]-po[b.priority]||(a.due||'z').localeCompare(b.due||'z'));
+  const wrap=document.getElementById('task-list');
+  if(!tasks.length){wrap.innerHTML='<div class="empty-state"><strong>All clear</strong>Add tasks above or tell Flint.</div>';return;}
+  if(pf==='all'&&state.activeProject==='all'){
+    let html='';
+    PROJECTS.forEach(p=>{
+      const pt=tasks.filter(t=>t.project===p.id);
+      if(!pt.length)return;
+      html+=`<div class="section-head" style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div>${esc(p.name)}<span style="color:var(--text3);font-weight:400;margin-left:4px">${pt.length}</span></div>`;
+      html+=pt.map(taskHtml).join('');
+    });
+    const known=new Set(PROJECTS.map(p=>p.id));
+    const orphans=tasks.filter(t=>!known.has(t.project));
+    if(orphans.length){html+='<div class="section-head">Other</div>';html+=orphans.map(taskHtml).join('');}
+    wrap.innerHTML=html;
+  }else if(pf==='all'&&state.activeProject!=='all'&&state.activeProject.indexOf('__')<0){
+    // Single project selected — group by subfolder
+    const withSub=tasks.filter(t=>t.subfolder);
+    const noSub=tasks.filter(t=>!t.subfolder);
+    const folders=[...new Set(withSub.map(t=>t.subfolder))].sort();
+    let html='';
+    folders.forEach(f=>{
+      const ft=withSub.filter(t=>t.subfolder===f);
+      html+=`<div class="section-head" style="display:flex;align-items:center;gap:6px"><span style="color:var(--orange)">&#x1F4CD;</span>${esc(f)} <span style="color:var(--text3);font-weight:400">${ft.length}</span></div>`;
+      html+=ft.map(taskHtml).join('');
+    });
+    if(noSub.length){if(folders.length)html+='<div class="section-head">Other</div>';html+=noSub.map(taskHtml).join('');}
+    wrap.innerHTML=html;
+  }else{wrap.innerHTML=tasks.map(taskHtml).join('');}
+  bindTasks();
+}
+function taskHtml(t){
+  const p=proj(t.project);const done=t.status==='done';const ov=!done&&isOverdue(t.due);
+  let tags='';
+  if(t.suggested)tags+=`<span class="tag tag-suggested">Suggested</span>`;
+  if(t.status==='waiting')tags+=`<span class="tag tag-waiting">Waiting</span>`;
+  if(t.tags?.includes('commitment'))tags+=`<span class="tag tag-commit">Commitment</span>`;
+  if(t.subfolder)tags+=`<span class="tag" style="background:rgba(255,159,10,.08);color:var(--orange);font-size:10px">&#x1F4CD; ${esc(t.subfolder)}</span>`;
+  if(t.due)tags+=`<span class="due-text ${ov?'due-overdue':''}">${ov?'Overdue: ':'Due: '}${fmtDate(t.due)}</span>`;
+  const saBtns=t.suggested?`<div class="suggest-actions"><button class="sa-btn sa-approve" onclick="event.stopPropagation();approveTask('${t.id}')">Approve</button><button class="sa-btn sa-deny" onclick="event.stopPropagation();denyTask('${t.id}')">Deny</button></div>`:'';
+  return`<div class="task-item${t.suggested?' suggested':''}${done?' done-item':''}" data-id="${t.id}"><div class="check ${done?'checked':''}" data-id="${t.id}"></div><div class="p-flag p-${t.priority}"></div><div class="task-body"><div class="task-title-text">${esc(t.title)}</div><div class="task-meta"><span class="tag tag-project" style="color:${p.color}">${esc(p.name)}</span>${tags}</div>${t.notes?`<div class="task-notes-preview">${esc(t.notes.slice(0,80))}...</div>`:''} ${saBtns}</div></div>`;
+}
+function bindTasks(){document.querySelectorAll('.task-item').forEach(el=>el.addEventListener('click',e=>{if(e.target.closest('.check')||e.target.closest('.sa-btn'))return;openEditModal(el.dataset.id);}));document.querySelectorAll('.check').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();toggleTask(el.dataset.id);}));}
+function renderProjects(){document.getElementById('projects-grid').innerHTML=PROJECTS.map(p=>{const tasks=state.tasks.filter(t=>t.project===p.id&&t.status!=='done');const next=tasks.sort((a,b)=>{const po={high:0,med:1,low:2};return po[a.priority]-po[b.priority];})[0];return`<div class="proj-card" onclick="filterProject('${p.id}')"><div class="proj-card-top" style="background:${p.color}"></div><div class="proj-card-name">${esc(p.name)}</div><div class="proj-card-count">${tasks.length} active</div><div class="proj-card-next">${next?esc(next.title.slice(0,55)):'All clear'}</div></div>`;}).join('');}
+function filterProject(id){state.activeProject=id;switchView('tasks');}
+function renderAll(){renderSidebar();if(state.activeView==='tasks')renderTasks();else if(state.activeView==='projects')renderProjects();}
+// ── SUGGESTED TASKS ───────────────────────────────────────
+function approveTask(id){updateTask(id,{suggested:false,importanceNote:''});addFlintMsg('sys','Task approved.');}
+function denyTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;if(t.priority==='high'&&t.importanceNote){pendingDenyId=id;document.getElementById('deny-reason').textContent=t.importanceNote;document.getElementById('deny-modal').classList.add('show');}else{deleteTask(id);addFlintMsg('sys','Task removed.');}}
+function confirmDeny(){if(pendingDenyId)deleteTask(pendingDenyId);pendingDenyId=null;closeModal('deny-modal');addFlintMsg('sys','Removed. If it comes up in a transcript it will be suggested again.');}
+// ── MODALS ────────────────────────────────────────────────
+function populateProjectSelect(selId,val){document.getElementById(selId).innerHTML=PROJECTS.map(p=>`<option value="${p.id}" ${p.id===val?'selected':''}>${p.name}</option>`).join('');}
+function openAddModal(){state.editingTaskId=null;document.getElementById('modal-title').textContent='New Task';document.getElementById('mt-title').value='';document.getElementById('mt-priority').value='med';document.getElementById('mt-status').value='todo';document.getElementById('mt-waiting').value='';document.getElementById('mt-subfolder').value='';document.getElementById('mt-due').value='';document.getElementById('mt-notes').value='';document.getElementById('delete-btn').style.display='none';document.getElementById('waiting-row').style.display='none';populateProjectSelect('mt-project','real-estate');document.getElementById('task-modal').classList.add('show');setTimeout(()=>document.getElementById('mt-title').focus(),50);}
+function openEditModal(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;state.editingTaskId=id;document.getElementById('modal-title').textContent='Edit Task';document.getElementById('mt-title').value=t.title;populateProjectSelect('mt-project',t.project);document.getElementById('mt-priority').value=t.priority;document.getElementById('mt-status').value=t.status;document.getElementById('mt-waiting').value=t.waitingOn||'';document.getElementById('mt-subfolder').value=t.subfolder||'';document.getElementById('mt-due').value=t.due||'';document.getElementById('mt-notes').value=t.notes||'';document.getElementById('delete-btn').style.display='inline-block';document.getElementById('waiting-row').style.display=t.status==='waiting'?'block':'none';document.getElementById('task-modal').classList.add('show');}
+function saveTaskModal(){const title=document.getElementById('mt-title').value.trim();if(!title)return;const data={title,project:document.getElementById('mt-project').value,priority:document.getElementById('mt-priority').value,status:document.getElementById('mt-status').value,waitingOn:document.getElementById('mt-waiting').value.trim(),subfolder:document.getElementById('mt-subfolder').value.trim(),due:document.getElementById('mt-due').value,notes:document.getElementById('mt-notes').value.trim(),suggested:false};if(state.editingTaskId){updateTask(state.editingTaskId,data);addFlintMsg('sys','Task updated.');}else{const t=addTask(data);addFlintMsg('sys',`Added to ${proj(t.project).name}${t.subfolder?' › '+t.subfolder:''}.`);}closeModal('task-modal');}
+function deleteCurrentTask(){if(!state.editingTaskId||!confirm('Delete this task?'))return;deleteTask(state.editingTaskId);closeModal('task-modal');addFlintMsg('sys','Deleted.');}
+function closeModal(id){document.getElementById(id).classList.remove('show');state.editingTaskId=null;}
+function openAddEvent(){document.getElementById('me-date').value=todayStr();document.getElementById('me-time').value='09:00';document.getElementById('event-modal').classList.add('show');}
+function saveEvent(){const title=document.getElementById('me-title').value.trim();if(!title)return;const t24=document.getElementById('me-time').value;const[h,m]=t24.split(':').map(Number);const ap=h>=12?'PM':'AM',h12=h%12||12;const dur=parseInt(document.getElementById('me-dur').value);const eh=h+Math.floor(dur/60),em=m+dur%60;const eap=eh>=12?'PM':'AM',eh12=eh%12||12;const ev={id:uid(),title,date:document.getElementById('me-date').value,time:`${h12}:${String(m).padStart(2,'0')} ${ap}`,end:`${eh12}:${String(em).padStart(2,'0')} ${eap}`,color:'#4a9eff',source:'local'};state.events.push(ev);save();renderWizardCal();renderSchedule();closeModal('event-modal');}
+function openSettings(){document.getElementById('s-provider').value=getSetting('ai_provider')||'openai';document.getElementById('s-openai').value=getSetting('openai_key');document.getElementById('s-anthropic').value=getSetting('anthropic_key');document.getElementById('s-google').value=getSetting('google_client_id');document.getElementById('settings-modal').classList.add('show');}
+function saveSettings(){
+  state.settings.ai_provider=document.getElementById('s-provider').value;
+  state.settings.openai_key=document.getElementById('s-openai').value.trim();
+  state.settings.anthropic_key=document.getElementById('s-anthropic').value.trim();
+  state.settings.google_client_id=document.getElementById('s-google').value.trim();
+  // Save to localStorage
+  save();
+  // Also save to cookies (1 year) as backup — survives localStorage clears
+  ['openai_key','anthropic_key','google_client_id','ai_provider'].forEach(k=>{
+    if(state.settings[k])setCookieSetting(k,state.settings[k]);
+  });
+  closeModal('settings-modal');
+  addFlintMsg('sys','Settings saved.');
+  initGoogleAuth();
+  if(state.settings.openai_key||state.settings.anthropic_key)setTimeout(testAPIKey,500);
+}
+// ── VIEWS ─────────────────────────────────────────────────
+function switchView(v){state.activeView=v;document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');document.querySelector(`[data-view="${v}"]`).classList.add('active');if(v==='tasks')renderTasks();else if(v==='projects')renderProjects();}
+// ── EVENT LISTENERS ───────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(el=>el.addEventListener('click',()=>switchView(el.dataset.view)));
+document.getElementById('quick-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=e.target.value.trim();if(!v)return;const t=addTask({title:cleanTitle(v),project:guessProj(v),priority:guessPrio(v)});addFlintMsg('sys',`Added: ${esc(t.title)}`);e.target.value='';}});
+document.getElementById('flint-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendFlint();}});
+document.getElementById('flint-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px';});
+document.getElementById('mt-status').addEventListener('change',function(){document.getElementById('waiting-row').style.display=this.value==='waiting'?'block':'none';});
+document.querySelectorAll('.chip[data-pf]').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.chip[data-pf]').forEach(x=>x.classList.remove('active'));el.classList.add('active');state.activePriority=el.dataset.pf;renderTasks();}));
+document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-backdrop.show').forEach(el=>closeModal(el.id));if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('flint-input').focus();}if((e.ctrlKey||e.metaKey)&&e.key==='n'&&state.activeView==='tasks'){e.preventDefault();openAddModal();}});
+const dz=document.querySelector('.flint-drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over',);});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleFileUpload(f);});
+// ── DIAGNOSTIC ────────────────────────────────────────────
+function runDiagnostic(){
+  const active=state.tasks.filter(t=>t.status!=='done');
+  const suggested=state.tasks.filter(t=>t.suggested);
+  const hasOpenAI=!!getSetting('openai_key');
+  const hasAnthropic=!!getSetting('anthropic_key');
+  const googleOK=isGConnected();
+  const lsOK=!!localStorage.getItem('den_v3');
+  const lines=[
+    `<strong>The Den Diagnostic</strong>`,
+    `Tasks: ${state.tasks.length} total, ${active.length} active, ${suggested.length} pending approval`,
+    `Events today: ${state.events.filter(e=>e.date===todayStr()).length}`,
+    `One Thing: ${state.oneThing||'not set'}`,
+    `OpenAI key: ${hasOpenAI?'<span style="color:var(--green)">Set</span>':'<span style="color:var(--red)">Missing</span>'}`,
+    `Anthropic key: ${hasAnthropic?'<span style="color:var(--green)">Set</span>':'<span style="color:var(--orange)">Not set</span>'}`,
+    `Google OAuth: ${googleOK?'<span style="color:var(--green)">Connected</span>':'<span style="color:var(--text3)">Not connected</span>'}`,
+    `LocalStorage: ${lsOK?'<span style="color:var(--green)">Saving OK</span>':'<span style="color:var(--red)">Not saving</span>'}`,
+    `Wizard done: ${state.wizardDone}`,
+    `<small style="color:var(--text3)">Type "test api" to verify Flint connection</small>`,
+  ];
+  addFlintMsg('flint',lines.join('<br>'));
+}
+async function testAPI(){
+  const hasKey=getSetting('openai_key')||getSetting('anthropic_key');
+  if(!hasKey){addFlintMsg('flint','No API key set. Go to Settings and add your OpenAI or Anthropic key.');return;}
+  addFlintMsg('sys','Testing API connection...');
+  const resp=await callFlintAPI('Reply with exactly: "Flint is online." Nothing else.');
+  if(resp&&resp.toLowerCase().includes('online')){
+    addFlintMsg('sys',`<span style="color:var(--green)">API working.</span> Flint responded: "${esc(resp.trim())}"`);
+  }else if(resp){
+    addFlintMsg('sys',`<span style="color:var(--orange)">API connected but unexpected response:</span> "${esc(resp.trim())}"`);
+  }else{
+    addFlintMsg('flint',`<span style="color:var(--red)">API call failed.</span> Check your key in Settings. If the key is correct, check that ${getSetting('ai_provider')==='anthropic'?'api.anthropic.com':'api.openai.com'} is allowed in your network egress settings.`);
+  }
+}
+// ── GOOGLE CALENDAR PANEL ────────────────────────────────
+function renderCalendar(){
+  const today=todayStr();
+  document.getElementById('gcal-date').textContent=new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
+  const evs=state.events
+    .filter(e=>e.date===today)
+    .sort((a,b)=>{
+      const at=parseTimeStr(a.time),bt=parseTimeStr(b.time);
+      if(!at&&!bt)return 0;if(!at)return 1;if(!bt)return -1;
+      return at-bt;
+    });
+  const body=document.getElementById('gcal-body');
+  if(!evs.length){
+    body.innerHTML=isGConnected()
+      ?'<div class="gcal-empty">No events today.</div>'
+      :'<div class="gcal-empty">Connect Google Calendar<br>to see today\'s events.<br><br><button class="btn btn-ghost btn-sm" onclick="connectGoogle()" style="font-size:14px">Connect</button></div>';
+    return;
+  }
+  const now=new Date();
+  body.innerHTML=evs.map(e=>{
+    const st=parseTimeStr(e.time);
+    const et=e.end?parseTimeStr(e.end):null;
+    const past=et&&et<now;
+    const current=st&&et&&st<=now&&now<=et;
+    const dur=st&&et?fmtMins(Math.round((et-st)/60000)):'';
+    const color=e.color||'var(--blue)';
+    return`<div class="gcal-event" style="${past?'opacity:.4':''}${current?'border-color:'+color+';background:rgba(74,158,255,.13)':''}">
+      <div class="gcal-bar" style="background:${color}"></div>
+      <div class="gcal-info">
+        <div class="gcal-name">${esc(e.title)}${current?' <span style="font-size:11px;color:var(--green);font-weight:700">NOW</span>':''}</div>
+        <div class="gcal-time">${esc(e.time)}${dur?' &middot; '+dur:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+// ── RESET DAY ────────────────────────────────────────────
+function resetDay(){
+  if(!confirm('Reset to the beginning of the morning wizard?'))return;
+  state.wizardDone=false;
+  state.wizardDate='';
+  state.wizardStep=0;
+  state.oneThing='';
+  state.checkin={meds:false,water:false};
+  save();
+  // Hide post-wizard, show wizard
+  document.getElementById('post-wizard').style.display='none';
+  document.getElementById('wizard-wrap').style.display='';
+  document.getElementById('sched-focus').style.display='none';
+  switchView('den');
+  initWizard();
+  addFlintMsg('sys','Day reset. Good morning, Stu.');
+}
+// ── FIELDY CONNECTION TEST ────────────────────────────────
+async function testFieldyConnection(){
+  addFlintMsg('sys','Testing Fieldy webhook connection...');
+  try{
+    const r=await fetch('http://localhost:9090/status',{signal:AbortSignal.timeout(4000)});
+    if(!r.ok)throw new Error('Bad response');
+    const d=await r.json();
+    const lastUpdate=d.last_update?new Date(d.last_update*1000).toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit',hour12:true}):'never';
+    addFlintMsg('flint',
+      `<strong>Webhook server: <span style="color:var(--green)">Running</span></strong><br>`+
+      `Chunks received today: ${d.chunks_today||0}<br>`+
+      `Last push from Fieldy: ${lastUpdate}<br>`+
+      `<br>`+
+      (d.chunks_today>0
+        ? `<span style="color:var(--green)">Fieldy is pushing data.</span> If tasks aren't appearing, the transcript may not have actionable items yet.`
+        : `<span style="color:var(--orange)">No data from Fieldy yet.</span> Check that:<br>`+
+          `1. Fieldy has this URL saved: <code>https://overgrown-cursor-tablet.ngrok-free.dev</code><br>`+
+          `2. ngrok is running (black terminal window open)<br>`+
+          `3. You are actively recording on your Fieldy device`)
+    );
+    document.getElementById('fieldy-btn').classList.add('connected');
+    document.getElementById('fieldy-btn').textContent='📡 Fieldy';
+  }catch(e){
+    addFlintMsg('flint',
+      `<strong>Webhook server: <span style="color:var(--red)">Not running</span></strong><br><br>`+
+      `Port 9090 is not responding. Quick fix — no need to close The Den:<br><br>`+
+      `<strong>Double-click <code>Start Webhook.bat</code></strong> in your The Den folder.<br><br>`+
+      `That restarts the webhook and ngrok in the background. Then type <strong>test fieldy</strong> to confirm.`
+    );
+    document.getElementById('fieldy-btn').classList.remove('connected');
+    document.getElementById('fieldy-btn').textContent='📡 Fieldy';
+  }
+}
+// ── BACKUP / RESTORE ─────────────────────────────────────
+function exportBackup(){
+  const data=JSON.stringify({tasks:state.tasks,events:state.events,oneThing:state.oneThing,exportedAt:new Date().toISOString()},null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`den-backup-${todayStr()}.json`;a.click();
+  addFlintMsg('sys',`Backup downloaded: ${state.tasks.length} tasks.`);
+}
+async function importBackup(file){
+  if(!file)return;
+  try{
+    const text=await file.text();const d=JSON.parse(text);
+    if(!Array.isArray(d.tasks))throw new Error('Not a valid Den backup file');
+    const existing=new Set(state.tasks.map(t=>t.title.toLowerCase().trim()));
+    let added=0;
+    d.tasks.forEach(t=>{
+      if(!t.title)return;
+      const key=t.title.toLowerCase().trim();
+      if(existing.has(key))return;
+      existing.add(key);
+      state.tasks.push({...t,id:t.id||uid(),suggested:false});
+      added++;
+    });
+    save();renderAll();
+    addFlintMsg('sys',`Restored ${added} task${added!==1?'s':''} from backup.`);
+    closeModal('settings-modal');
+  }catch(e){addFlintMsg('flint','Could not read backup file. Make sure it\'s a Den JSON export.');}
+}
+// ── INIT ──────────────────────────────────────────────────
+// ── FIELDY LIVE WEBHOOK POLLING ───────────────────────────
+let lastFieldyTimestamp=0;
+let fieldyConnected=false;
+async function pollFieldyWebhook(){
+  try{
+    const r=await fetch('http://localhost:9090/transcript',{signal:AbortSignal.timeout(3000)});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!fieldyConnected){
+      fieldyConnected=true;
+      addFlintMsg('sys','Fieldy live connection active. Transcripts will process automatically.');
+      document.getElementById('drive-btn').textContent='📡 Fieldy Live';
+      document.getElementById('drive-btn').classList.add('connected');
+    }
+    // Auto-extraction disabled — transcript data available but not processed automatically
+    if(d.timestamp&&d.timestamp>lastFieldyTimestamp&&d.text)lastFieldyTimestamp=d.timestamp;
+  }catch(e){
+    if(fieldyConnected){
+      fieldyConnected=false;
+      document.getElementById('drive-btn').textContent='📁 Drive';
+      document.getElementById('drive-btn').classList.remove('connected');
+    }
+  }
+}
+/// 7pm auto-check disabled
+function checkDriveAt7pm(){}
+function init(){
+  load();renderAll();renderSchedule();
+  if(getSetting('google_client_id'))setTimeout(initGoogleAuth,1500);
+  if(isGConnected()){document.getElementById('cal-btn').classList.add('connected');document.getElementById('drive-btn').classList.add('connected');}
+  initWizard();renderCalendar();
+  const h=new Date().getHours();
+  addFlintMsg('flint',`Good ${h<12?'morning':h<17?'afternoon':'evening'}, Stu. ${state.tasks.filter(t=>t.status!=='done'&&t.priority==='high').length} urgent tasks. ${state.tasks.filter(t=>t.suggested).length} waiting for your approval. Cmd+K to focus here.`);
+  // Load from disk — overwrites localStorage if server has more tasks
+  setTimeout(loadFromServer,1000);
+  // Check at 7pm on load, then every 30min while app is open
+  setTimeout(checkDriveAt7pm,3000);
+  setInterval(checkDriveAt7pm,1800000);
+  // Poll Fieldy webhook receiver every 30 seconds
+  setTimeout(pollFieldyWebhook,5000);
+  setInterval(pollFieldyWebhook,30000);
+}
+init();
+</script>
+</body>
+</html>

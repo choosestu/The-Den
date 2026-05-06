@@ -1,0 +1,3109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>The Den</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --card: #222;
+  --border: #2e2e2e;
+  --accent: #c8a84b;
+  --accent-dim: rgba(200,168,75,0.12);
+  --text: #e4e4e4;
+  --muted: #888;
+  --dim: #444;
+  --urgent: #ff6b35;
+  --done: #4caf50;
+  --waiting: #5c9bd6;
+  --r: 8px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* =====================================================
+   MORNING RITUAL
+===================================================== */
+#ritual {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ritual-step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  padding: 24px;
+  animation: fade-in 0.3s ease;
+}
+
+.ritual-step.active { display: flex; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ritual-icon { font-size: 64px; margin-bottom: 20px; }
+
+.ritual-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.ritual-subtitle {
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.ritual-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  max-width: 280px;
+  transition: opacity 0.15s;
+}
+
+.ritual-btn:hover { opacity: 0.88; }
+
+.ritual-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ritual-btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 10px 32px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  width: 100%;
+  max-width: 280px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ritual-btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+.gym-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.gym-btn:hover { color: var(--text); }
+
+/* Timer */
+.timer-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 24px;
+}
+
+.timer-ring svg { transform: rotate(-90deg); }
+
+.ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+
+.ring-progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 364;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.timer-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* Journal */
+.journal-area {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.7;
+  padding: 16px;
+  resize: none;
+  margin-bottom: 16px;
+  height: 180px;
+}
+
+.journal-area::placeholder { color: var(--dim); }
+.journal-area:focus { outline: none; border-color: var(--accent); }
+
+/* One Thing */
+.ot-input {
+  width: 100%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.ot-input::placeholder { color: var(--dim); font-weight: 400; font-size: 15px; }
+.ot-input:focus { outline: none; }
+
+/* Progress dots */
+.ritual-dots {
+  position: fixed;
+  bottom: 36px;
+  display: flex;
+  gap: 8px;
+}
+
+.rdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.rdot.done { background: var(--accent); }
+.rdot.active { background: var(--muted); }
+
+/* =====================================================
+   MAIN DEN
+===================================================== */
+#den {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#den.open { display: flex; }
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-logo {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.topbar-date { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+
+.topbar-ot {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-ot strong { color: var(--accent); font-weight: 600; }
+
+.topbar-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+.tb-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tb-btn:hover { color: var(--text); }
+.tb-btn.connected { color: var(--done); border-color: var(--done); }
+.tb-btn.g-btn { font-size: 13px; padding: 5px 9px; }
+
+/* Tabs */
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  padding: 10px 22px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-pane { display: none; flex: 1; overflow: hidden; }
+.tab-pane.active { display: flex; flex-direction: column; }
+
+/* =====================================================
+   TODAY TAB
+===================================================== */
+#pane-today { flex-direction: row; }
+
+.today-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.today-side {
+  width: 260px;
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px 16px;
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* One Thing banner */
+.ot-banner {
+  background: var(--accent-dim);
+  border: 1px solid rgba(200,168,75,0.25);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.ot-banner .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+.ot-banner .value { font-size: 17px; font-weight: 700; color: var(--text); }
+
+/* Add event */
+.add-event-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.add-event-time {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 10px;
+  width: 90px;
+}
+
+.add-event-title {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.add-event-title::placeholder, .add-event-time::placeholder { color: var(--dim); }
+.add-event-title:focus, .add-event-time:focus { outline: none; border-color: var(--accent); }
+
+.add-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--r);
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-btn:hover { opacity: 0.88; }
+
+/* Event items */
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--surface);
+  margin-bottom: 4px;
+  border-left: 3px solid var(--accent);
+}
+
+.event-time {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.event-title { flex: 1; font-size: 13px; }
+
+.event-del {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.event-del:hover { color: var(--urgent); }
+
+/* Top 3 */
+.top3-item {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.top3-item:last-child { border-bottom: none; }
+
+.top3-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.top3-body .text { font-size: 13px; color: var(--text); line-height: 1.4; }
+.top3-body .cat { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Waiting on */
+.wo-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.wo-item:last-child { border-bottom: none; }
+.wo-person { color: var(--waiting); font-weight: 600; }
+.wo-what { color: var(--text); margin-top: 2px; line-height: 1.4; }
+.wo-project { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+/* =====================================================
+   TASKS TAB
+===================================================== */
+#pane-tasks { flex-direction: row; overflow: hidden; }
+
+.tasks-sidebar {
+  width: 170px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px 0;
+  flex-shrink: 0;
+}
+
+.cat-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  padding: 7px 14px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cat-btn:hover { color: var(--text); background: var(--surface); }
+
+.cat-btn.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.cat-count {
+  float: right;
+  background: var(--border);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.tasks-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.task-add-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.task-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 9px 13px;
+}
+
+.task-input::placeholder { color: var(--dim); }
+.task-input:focus { outline: none; border-color: var(--accent); }
+
+.task-cat-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 9px 10px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chip:hover { color: var(--text); }
+.chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+.task-list { display: flex; flex-direction: column; gap: 3px; }
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: var(--surface);
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.task-item:hover { background: var(--card); }
+.task-item.is-urgent { border-left-color: var(--urgent); }
+.task-item.is-waiting { border-left-color: var(--waiting); }
+.task-item.is-done { opacity: 0.38; }
+
+/* Green done button (left of task) */
+.task-done-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.task-done-btn:hover { border-color: var(--done); background: rgba(76,175,80,0.15); }
+.task-item.is-done .task-done-btn { background: var(--done); border-color: var(--done); }
+
+/* Selection checkbox */
+.task-select-cb {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+/* Inline editing */
+.task-text[contenteditable="true"] {
+  outline: none;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 1px;
+  cursor: text;
+}
+
+/* Bulk action bar */
+.task-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--accent);
+}
+.task-bulk-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.task-bulk-btn.done-btn { background: var(--done);   color: #000; }
+.task-bulk-btn.del-btn  { background: var(--urgent); color: #fff; }
+.task-bulk-btn.urg-btn  { background: var(--accent); color: #000; }
+
+.task-item.is-selected { background: rgba(200,168,75,0.07); }
+
+.task-body { flex: 1; min-width: 0; }
+
+.task-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+.task-item.is-done .task-text { text-decoration: line-through; }
+
+.task-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 10px;
+  background: var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--muted);
+}
+
+.tag.urgent { background: rgba(255,107,53,0.18); color: var(--urgent); }
+
+.task-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.task-item:hover .task-actions { opacity: 1; }
+
+.task-act-btn {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 5px;
+  transition: color 0.15s;
+}
+
+.task-act-btn:hover { color: var(--muted); }
+.task-act-btn.del:hover { color: var(--urgent); }
+
+/* =====================================================
+   FLINT TAB
+===================================================== */
+#pane-flint { overflow: hidden; }
+
+.flint-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.flint-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.msg {
+  display: flex;
+  gap: 10px;
+  max-width: 680px;
+}
+
+.msg.user { flex-direction: row-reverse; margin-left: auto; }
+
+.msg-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #000;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.msg.user .msg-av {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.msg-bubble {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 560px;
+}
+
+.msg.user .msg-bubble {
+  background: var(--accent-dim);
+  border: 1px solid rgba(200,168,75,0.25);
+}
+
+.msg-bubble p { margin-bottom: 8px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+
+.msg-bubble ul, .msg-bubble ol {
+  padding-left: 18px;
+  margin-bottom: 8px;
+}
+
+.msg-bubble li { margin-bottom: 3px; }
+
+.apply-bar {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.apply-btn {
+  background: var(--accent-dim);
+  border: 1px solid rgba(200,168,75,0.3);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.apply-btn:hover { background: rgba(200,168,75,0.22); }
+
+/* Task Selection Panel */
+.task-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin: 4px 0 4px 42px;
+  max-width: 680px;
+  /* flex layout handled inline for panel-in-mount usage */
+}
+
+.tp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tp-header strong { color: var(--text); }
+
+.tp-hbtn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-family: var(--font);
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tp-hbtn:hover { color: var(--text); }
+
+.tp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tp-table thead tr { border-bottom: 1px solid var(--border); }
+
+.tp-table th {
+  text-align: left;
+  padding: 7px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.tp-table th:first-child { width: 34px; }
+
+.tp-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(46,46,46,0.7);
+  vertical-align: top;
+}
+
+.tp-table tr:last-child td { border-bottom: none; }
+.tp-table tr.tp-selected td { background: rgba(200,168,75,0.07); }
+
+.tp-task-text { color: var(--text); line-height: 1.4; }
+
+.tp-task-text[contenteditable="true"] {
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  display: inline-block;
+  min-width: 180px;
+}
+
+.tp-category { color: var(--muted); font-size: 12px; }
+.tp-topic { color: var(--waiting); font-size: 12px; }
+
+.tp-group-row td {
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  padding: 5px 12px;
+}
+
+.tp-footer {
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tp-sel-count { color: var(--accent); font-weight: 700; }
+
+.tp-action-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.tp-action-btn:disabled { opacity: 0.35; cursor: default; }
+.tp-action-btn:not(:disabled):hover { opacity: 0.82; }
+.tp-add  { background: var(--done);   color: #000; }
+.tp-edit { background: var(--accent); color: #000; }
+.tp-del  { background: var(--urgent); color: #fff; }
+
+.tp-save-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* Typing dots */
+.dots span {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: pulse 1.3s infinite ease-in-out;
+  margin-right: 3px;
+}
+
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 80%, 100% { transform: scale(0.65); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Flint input */
+.flint-footer {
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  background: var(--surface);
+}
+
+.flint-tools {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tool-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-family: var(--font);
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tool-btn:hover { color: var(--text); border-color: var(--muted); }
+
+.upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--card);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.flint-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.flint-textarea {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 10px 14px;
+  resize: none;
+  min-height: 44px;
+  max-height: 160px;
+  line-height: 1.5;
+}
+
+.flint-textarea::placeholder { color: var(--dim); }
+.flint-textarea:focus { outline: none; border-color: var(--accent); }
+
+.send-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--r);
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.send-btn:hover { opacity: 0.88; }
+.send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* =====================================================
+   CALENDAR TAB
+===================================================== */
+#pane-calendar {
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cal-nav h2 { font-size: 20px; font-weight: 700; }
+
+.cal-nav-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.cal-nav-btn:hover { border-color: var(--muted); }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-hdr {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.cal-day {
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 76px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.cal-day:hover { background: var(--card); }
+.cal-day.today { border-color: var(--accent); }
+.cal-day.other { opacity: 0.28; }
+
+.cal-num {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cal-day.today .cal-num { color: var(--accent); }
+
+.cal-ev {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* =====================================================
+   SETTINGS MODAL
+===================================================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 28px;
+  width: 420px;
+  max-width: 92vw;
+  border: 1px solid var(--border);
+}
+
+.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+.mf { margin-bottom: 16px; }
+
+.ml {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.mi {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 9px 12px;
+}
+
+.mi:focus { outline: none; border-color: var(--accent); }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn-p {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 22px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-s {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 22px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-danger { color: var(--urgent); border-color: var(--urgent); width: 100%; margin-top: 4px; }
+
+/* =====================================================
+   UTILS
+===================================================== */
+.hidden { display: none !important; }
+
+.empty-state {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  font-size: 13px;
+  z-index: 999;
+  animation: slide-in 0.2s ease;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+     MORNING RITUAL
+===================================================== -->
+<div id="ritual">
+
+  <button class="gym-btn" onclick="gymMode()">Gym day</button>
+
+  <!-- Step 0: Welcome -->
+  <div class="ritual-step active" data-step="0">
+    <div class="ritual-icon">&#x1F305;</div>
+    <div class="ritual-title" id="greeting-text">Good morning, Stu</div>
+    <div class="ritual-subtitle" id="greeting-date"></div>
+    <button class="ritual-btn" onclick="nextStep()">Start morning</button>
+  </div>
+
+  <!-- Step 1: Water -->
+  <div class="ritual-step" data-step="1">
+    <div class="ritual-icon">&#x1F4A7;</div>
+    <div class="ritual-title">Water first.</div>
+    <div class="ritual-subtitle">Get a glass. Drink it now.</div>
+    <button class="ritual-btn" onclick="nextStep()">Done</button>
+  </div>
+
+  <!-- Step 2: Meds -->
+  <div class="ritual-step" data-step="2">
+    <div class="ritual-icon">&#x1F48A;</div>
+    <div class="ritual-title">Meds.</div>
+    <div class="ritual-subtitle">Non-negotiable.</div>
+    <button class="ritual-btn" onclick="nextStep()">Taken</button>
+  </div>
+
+  <!-- Step 3: Stretch -->
+  <div class="ritual-step" data-step="3">
+    <div class="ritual-icon">&#x1F9D8;</div>
+    <div class="ritual-title">2-minute stretch.</div>
+    <div class="ritual-subtitle">Neck, shoulders, spine. Move slow.</div>
+    <div class="timer-ring">
+      <svg width="140" height="140">
+        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+        <circle class="ring-progress" id="stretch-ring" cx="70" cy="70" r="58"/>
+      </svg>
+      <div class="timer-text" id="stretch-display">2:00</div>
+    </div>
+    <button class="ritual-btn" id="stretch-btn" onclick="startTimer('stretch', 120)">Start</button>
+    <button class="ritual-btn-ghost" onclick="nextStep()">Skip</button>
+  </div>
+
+  <!-- Step 4: Meditation -->
+  <div class="ritual-step" data-step="4">
+    <div class="ritual-icon">&#x1F56F;&#xFE0F;</div>
+    <div class="ritual-title">5 minutes.</div>
+    <div class="ritual-subtitle">Eyes closed. Just breathe.</div>
+    <div class="timer-ring">
+      <svg width="140" height="140">
+        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+        <circle class="ring-progress" id="med-ring" cx="70" cy="70" r="58"/>
+      </svg>
+      <div class="timer-text" id="med-display">5:00</div>
+    </div>
+    <button class="ritual-btn" id="med-btn" onclick="startTimer('med', 300)">Start</button>
+    <button class="ritual-btn-ghost" onclick="nextStep()">Skip</button>
+  </div>
+
+  <!-- Step 5: Journal -->
+  <div class="ritual-step" data-step="5">
+    <div class="ritual-icon">&#x270F;&#xFE0F;</div>
+    <div class="ritual-title">Brain dump.</div>
+    <div class="ritual-subtitle">No editing. No rules. Just write.</div>
+    <textarea class="journal-area" id="journal-input" placeholder="Whatever is in your head..."></textarea>
+    <button class="ritual-btn" id="journal-btn" onclick="nextStep()" disabled>Continue</button>
+  </div>
+
+  <!-- Step 6: One Thing -->
+  <div class="ritual-step" data-step="6">
+    <div class="ritual-icon">&#x1F3AF;</div>
+    <div class="ritual-title">What's the ONE thing today?</div>
+    <div class="ritual-subtitle">One thing. If nothing else gets done, this one matters.</div>
+    <input type="text" class="ot-input" id="ot-input" placeholder="Type it here..." maxlength="140"
+           oninput="document.getElementById('ot-btn').disabled = this.value.trim().length < 3"/>
+    <button class="ritual-btn" id="ot-btn" onclick="completeRitual()" disabled>Open The Den</button>
+  </div>
+
+  <div class="ritual-dots" id="ritual-dots"></div>
+</div>
+
+
+<!-- =====================================================
+     MAIN DEN
+===================================================== -->
+<div id="den">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">The Den</div>
+    <div class="topbar-date" id="tb-date"></div>
+    <div class="topbar-ot">One Thing: <strong id="tb-ot">--</strong></div>
+    <div class="topbar-btns">
+      <button class="tb-btn g-btn" id="g-cal-btn" onclick="handleGoogleCalendar()" title="Sync Google Calendar">&#x1F4C5;</button>
+      <button class="tb-btn g-btn" id="g-drive-btn" onclick="handleGoogleDrive()" title="Check Drive for transcripts">&#x1F4C1;</button>
+      <button class="tb-btn g-btn" id="g-mail-btn" onclick="handleGmail()" title="Check Gmail">&#x2709;&#xFE0F;</button>
+      <button class="tb-btn" onclick="openSettings()">Settings</button>
+      <button class="tb-btn" onclick="resetRitual()" title="Redo morning ritual">Ritual</button>
+    </div>
+  </div>
+
+  <!-- Tab nav -->
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-btn-today" onclick="switchTab('today')">Today</button>
+    <button class="tab-btn" id="tab-btn-tasks" onclick="switchTab('tasks')">Tasks</button>
+    <button class="tab-btn" id="tab-btn-flint" onclick="switchTab('flint')">Flint</button>
+    <button class="tab-btn" id="tab-btn-calendar" onclick="switchTab('calendar')">Calendar</button>
+  </div>
+
+  <!-- TODAY PANE -->
+  <div id="pane-today" class="tab-pane active">
+
+    <div class="today-main">
+      <div class="ot-banner">
+        <div class="label">One Thing Today</div>
+        <div class="value" id="ot-display">--</div>
+      </div>
+
+      <div class="section-label">Today's schedule</div>
+      <div class="add-event-bar">
+        <input class="add-event-time" id="ev-time" type="time" />
+        <input class="add-event-title" id="ev-title" placeholder="Add event or task..." onkeydown="if(event.key==='Enter') addEvent()"/>
+        <button class="add-btn" onclick="addEvent()">Add</button>
+      </div>
+      <div id="event-list"></div>
+    </div>
+
+    <div class="today-side">
+      <div class="section-label">Top 3 right now</div>
+      <div id="top3"></div>
+
+      <div class="section-label" style="margin-top:22px">Waiting on</div>
+      <div id="wo-list"></div>
+
+      <div style="margin-top:20px">
+        <button class="tool-btn" style="width:100%;text-align:center;padding:9px" onclick="switchTab('flint')">Open Flint</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TASKS PANE -->
+  <div id="pane-tasks" class="tab-pane">
+
+    <div class="tasks-sidebar" id="cat-sidebar">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="tasks-main">
+      <div class="task-add-bar">
+        <input class="task-input" id="task-input" placeholder="Add a task..."
+               onkeydown="if(event.key==='Enter') addTaskFromInput()"/>
+        <select class="task-cat-select" id="task-cat"></select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap">
+          <input type="checkbox" id="task-urgent" style="accent-color:var(--urgent)"/> Urgent
+        </label>
+        <button class="add-btn" onclick="addTaskFromInput()">Add</button>
+      </div>
+
+      <div class="filter-row" id="filter-row">
+        <div class="chip active" onclick="setFilter('active',this)">Active</div>
+        <div class="chip" onclick="setFilter('all',this)">All</div>
+        <div class="chip" onclick="setFilter('done',this)">Done</div>
+        <div class="chip" onclick="setFilter('urgent',this)">Urgent</div>
+        <div class="chip" onclick="setFilter('waiting',this)">Waiting On</div>
+      </div>
+
+      <div class="task-list" id="task-list"></div>
+    </div>
+
+  </div>
+
+  <!-- FLINT PANE -->
+  <div id="pane-flint" class="tab-pane">
+    <div class="flint-wrap">
+
+      <div class="flint-msgs" id="flint-msgs"></div>
+
+      <!-- Task panel lives here, outside the scrollable message area -->
+      <div id="task-panel-mount" style="flex-shrink:0;display:none;flex-direction:column;max-height:50vh;min-height:0;border-top:1px solid var(--border);overflow:hidden;"></div>
+
+      <div class="flint-footer">
+        <div class="flint-tools">
+          <button class="tool-btn" onclick="triggerUpload()">Upload file</button>
+          <button class="tool-btn" onclick="flintSummarizeRTDL()">Summarize my tasks</button>
+          <button class="tool-btn" onclick="flintPriority()">What should I work on?</button>
+          <button class="tool-btn" onclick="clearFlintHistory()">Clear chat</button>
+        </div>
+        <div class="upload-preview hidden" id="upload-preview">
+          <span id="upload-name"></span>
+          <button onclick="clearUpload()" style="background:none;border:none;color:var(--muted);cursor:pointer;margin-left:auto">&#x2715;</button>
+        </div>
+        <input type="file" id="file-input" accept="*" style="display:none" onchange="handleFile(event)"/>
+        <div class="flint-row">
+          <textarea class="flint-textarea" id="flint-input" placeholder="Talk to Flint..."
+                    rows="1" onkeydown="handleFlintKey(event)" oninput="autoGrow(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendFlint()">&#x2192;</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CALENDAR PANE -->
+  <div id="pane-calendar" class="tab-pane">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrev()">&#x2190;</button>
+      <h2 id="cal-label"></h2>
+      <button class="cal-nav-btn" onclick="calNext()">&#x2192;</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+</div>
+
+<!-- Settings Modal -->
+<div class="overlay hidden" id="settings-overlay">
+  <div class="modal">
+    <h3>Settings</h3>
+    <div class="mf">
+      <label class="ml">Anthropic API Key (for Flint)</label>
+      <input class="mi" type="password" id="s-apikey" placeholder="sk-ant-..."/>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px">Stored locally in your browser only.</div>
+    </div>
+    <div class="mf">
+      <label class="ml">Your name</label>
+      <input class="mi" type="text" id="s-name" placeholder="Stu"/>
+    </div>
+    <div class="mf">
+      <label class="ml">Google OAuth Client ID</label>
+      <input class="mi" type="text" id="s-google" placeholder="xxxxx.apps.googleusercontent.com"/>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px">Create at console.cloud.google.com. Authorized origin: file:// or http://localhost</div>
+    </div>
+    <div class="mf">
+      <label class="ml">Export</label>
+      <button class="btn-s" style="width:100%" onclick="exportData()">Download backup (JSON)</button>
+    </div>
+    <div class="mf">
+      <label class="ml" style="color:var(--urgent)">Danger zone</label>
+      <button class="btn-s btn-danger" onclick="clearAll()">Clear all data</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-s" onclick="closeSettings()">Cancel</button>
+      <button class="btn-p" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// =====================================================
+// CONSTANTS
+// =====================================================
+const CATS = [
+  'Real Estate','Burn The Sky','CarGoThenWeGo','Pumpkin Patch',
+  'UNSPUN','Politics','Life Systems and Admin','Family and Personal',
+  'House and Personal Finance','Legal and Admin','Waiting On'
+];
+
+const FLINT_SYSTEM = `You are Flint, the task extraction engine inside The Den. Stu's personal daily operating system.
+
+About Stu: 28-year real estate veteran in Oshawa, Ontario. ADHD (medicated daily). Entrepreneur: Real Estate (primary), Burn The Sky (fireworks), CarGoThenWeGo (logistics), Pumpkin Patch (seasonal), UNSPUN (in development), Politics (Oshawa Liberals). Relocating to Whistler or Kelowna by 2028.
+
+TRANSCRIPT PROCESSING RULES (follow exactly):
+- Extract explicit commitments, declared intentions, and clearly referenced ongoing actions.
+- Exclude banter, narrative without forward motion, and non-actionable context.
+- One task per forward-moving statement. Do not consolidate separate tasks into one.
+- Do not infer intent. Do not create new initiatives.
+- Do not output summaries, commentary, praise, or explanation.
+- Output ONLY the JSON block below. Nothing else.
+
+RTDL categories (use these exact names, no variations):
+Real Estate, Burn The Sky, CarGoThenWeGo, Pumpkin Patch, UNSPUN, Politics, Life Systems and Admin, Family and Personal, House and Personal Finance, Legal and Admin, Waiting On
+
+REQUIRED OUTPUT FORMAT - output this and nothing else when processing transcripts or adding tasks:
+
+\`\`\`json
+{"action":"add_tasks","tasks":[{"text":"task description","category":"Real Estate","topic":"930 Howden","urgent":false}],"waiting_on":[{"person":"Name","what":"what they owe","date":"date mentioned","project":"project name"}],"schedule":[{"date":"YYYY-MM-DD","time":"HH:MM","title":"event"}]}
+\`\`\`
+
+Field rules:
+- "category": must be one of the exact category names above.
+- "topic": short sub-project tag (e.g. "930 Howden", "508 Madison", "Ella"). Use "General" if none.
+- "urgent": true only if explicitly flagged urgent.
+- Include every task. Do not skip any. Do not split across multiple JSON blocks.
+
+For non-transcript questions (prioritization, project questions, general chat): respond normally in plain text. No JSON needed unless adding tasks.`;
+
+// =====================================================
+// STATE
+// =====================================================
+const STORE_KEY = 'den-v6';
+
+let S = {
+  tasks: [],
+  schedule: {},
+  waitingOn: [],
+  ritual: {},
+  flintHistory: [],
+  processedDriveFiles: [],
+  googleToken: null,
+  googleTokenExpiry: 0,
+  settings: {
+    apiKey: '',
+    name: 'Stu',
+    googleClientId: '791975476945-547af7j0pbn6h28eq73qcn5rbvrdi1mm.apps.googleusercontent.com'
+  }
+};
+
+const API_KEY_STORE = 'den-v6-apikey'; // Dedicated key - never wiped by main data save/clear
+
+function save() {
+  try {
+    // Trim flintHistory to last 40 messages before saving to avoid quota issues
+    const toStore = {...S, flintHistory: S.flintHistory.slice(-40)};
+    localStorage.setItem(STORE_KEY, JSON.stringify(toStore));
+  } catch(e) {
+    // Quota exceeded or other error - at minimum keep the API key safe
+    try { localStorage.setItem(API_KEY_STORE, S.settings.apiKey || ''); } catch(e2) {}
+  }
+  // Always write API key to its own dedicated slot
+  if (S.settings.apiKey) {
+    try { localStorage.setItem(API_KEY_STORE, S.settings.apiKey); } catch(e) {}
+  }
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Deep merge settings so new fields in defaults are not lost
+      if (parsed.settings) {
+        parsed.settings = Object.assign({}, S.settings, parsed.settings);
+      }
+      S = Object.assign(S, parsed);
+    }
+  } catch(e) {}
+  // Always restore API key from its dedicated slot - survives clearAll and quota failures
+  const savedKey = localStorage.getItem(API_KEY_STORE);
+  if (savedKey) S.settings.apiKey = savedKey;
+}
+
+// =====================================================
+// UTILS
+// =====================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ---- Duplicate / similarity detection ----
+const STOP_WORDS = new Set(['the','a','an','and','or','to','for','in','on','at','with','about','from','by','of','is','it','this','that','will','would','can','could','should','have','has','had','be','been','do','does','did','re','up','follow']);
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+}
+
+function similarity(a, b) {
+  const ta = new Set(tokenize(a));
+  const tb = new Set(tokenize(b));
+  if (!ta.size || !tb.size) return 0;
+  const intersection = [...ta].filter(w => tb.has(w)).length;
+  const union = new Set([...ta, ...tb]).size;
+  return intersection / union;
+}
+
+function isExactDuplicate(text) {
+  const norm = text.toLowerCase().trim();
+  return S.tasks.some(t => t.status !== 'done' && t.text.toLowerCase().trim() === norm);
+}
+
+function findSimilarTask(text) {
+  return S.tasks
+    .filter(t => t.status !== 'done')
+    .find(t => similarity(t.text, text) >= 0.55) || null;
+}
+
+function today() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDate(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+function fmtMonth(y, m) {
+  return new Date(y, m, 1).toLocaleDateString('en-CA', { month:'long', year:'numeric' });
+}
+
+function fmtTimeISO(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-CA', { hour:'2-digit', minute:'2-digit', hour12: false });
+}
+
+let toastTimer;
+function toast(msg) {
+  clearTimeout(toastTimer);
+  let el = document.getElementById('_toast');
+  if (!el) { el = document.createElement('div'); el.id = '_toast'; el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =====================================================
+// MORNING RITUAL
+// =====================================================
+let ritualStep = 0;
+let ritualTotal = 7;
+let timerInterval = null;
+let gymModeActive = false;
+const STEPS = [0,1,2,3,4,5,6]; // all steps
+const GYM_STEPS = [0,1,2,5,6]; // skip stretch+meditation
+
+function initRitual() {
+  const now = new Date();
+  const hours = now.getHours();
+  let greet = hours < 12 ? 'Good morning' : hours < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting-text').textContent = greet + ', ' + (S.settings.name || 'Stu');
+  document.getElementById('greeting-date').textContent = now.toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' });
+
+  buildDots();
+
+  document.getElementById('journal-input').addEventListener('input', function() {
+    document.getElementById('journal-btn').disabled = this.value.trim().length < 5;
+  });
+
+  showStep(0);
+}
+
+function buildDots() {
+  const steps = gymModeActive ? GYM_STEPS : STEPS;
+  const dots = document.getElementById('ritual-dots');
+  dots.innerHTML = steps.map((s, i) =>
+    `<div class="rdot" id="dot-${i}"></div>`
+  ).join('');
+}
+
+function updateDots() {
+  const steps = gymModeActive ? GYM_STEPS : STEPS;
+  steps.forEach((s, i) => {
+    const dot = document.getElementById('dot-' + i);
+    if (!dot) return;
+    if (s < ritualStep) dot.className = 'rdot done';
+    else if (s === ritualStep) dot.className = 'rdot active';
+    else dot.className = 'rdot';
+  });
+}
+
+function showStep(step) {
+  document.querySelectorAll('.ritual-step').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector(`[data-step="${step}"]`);
+  if (el) el.classList.add('active');
+  ritualStep = step;
+  updateDots();
+}
+
+function nextStep() {
+  clearTimerInterval();
+  const steps = gymModeActive ? GYM_STEPS : STEPS;
+  const idx = steps.indexOf(ritualStep);
+  if (idx < steps.length - 1) {
+    showStep(steps[idx + 1]);
+  }
+}
+
+function gymMode() {
+  gymModeActive = true;
+  buildDots();
+  showStep(GYM_STEPS[0]);
+  document.querySelector('.gym-btn').style.display = 'none';
+}
+
+function clearTimerInterval() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function startTimer(type, totalSec) {
+  clearTimerInterval();
+  const ringId = type === 'stretch' ? 'stretch-ring' : 'med-ring';
+  const dispId = type === 'stretch' ? 'stretch-display' : 'med-display';
+  const btnId  = type === 'stretch' ? 'stretch-btn' : 'med-btn';
+  const circumference = 364;
+
+  const ring = document.getElementById(ringId);
+  const disp = document.getElementById(dispId);
+  const btn  = document.getElementById(btnId);
+
+  btn.textContent = 'Running...';
+  btn.disabled = true;
+
+  let elapsed = 0;
+
+  timerInterval = setInterval(() => {
+    elapsed++;
+    const remaining = totalSec - elapsed;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    disp.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    ring.style.strokeDashoffset = circumference * (elapsed / totalSec);
+
+    if (elapsed >= totalSec) {
+      clearTimerInterval();
+      disp.textContent = 'Done';
+      setTimeout(() => nextStep(), 800);
+    }
+  }, 1000);
+}
+
+function completeRitual() {
+  const ot = document.getElementById('ot-input').value.trim();
+  if (!ot) return;
+
+  const journal = document.getElementById('journal-input').value.trim();
+  S.ritual[today()] = { oneThing: ot, journal, completedAt: Date.now() };
+  save();
+
+  openDen();
+}
+
+function checkRitual() {
+  const t = today();
+  if (S.ritual[t] && S.ritual[t].oneThing) {
+    openDen();
+  } else {
+    initRitual();
+  }
+}
+
+function openDen() {
+  document.getElementById('ritual').style.display = 'none';
+  document.getElementById('den').classList.add('open');
+  initDen();
+}
+
+function resetRitual() {
+  if (!confirm('Reset today\'s ritual? This will clear your One Thing for today.')) return;
+  delete S.ritual[today()];
+  save();
+  location.reload();
+}
+
+// =====================================================
+// DEN INIT
+// =====================================================
+function initDen() {
+  const t = today();
+  const ot = S.ritual[t]?.oneThing || '--';
+
+  document.getElementById('tb-date').textContent = new Date().toLocaleDateString('en-CA', { weekday:'short', month:'short', day:'numeric' });
+  document.getElementById('tb-ot').textContent = ot;
+  document.getElementById('ot-display').textContent = ot;
+
+  buildCatSidebar();
+  buildCatSelect();
+  renderTasks();
+  renderTodayEvents();
+  renderTop3();
+  renderWaitingOn();
+  renderCalendar();
+  initFlint();
+
+  // Google: poll until script is ready, then init and auto-sync
+  function waitForGoogleAndSync(attempts) {
+    if (window.google) {
+      initGoogleAuth();
+      updateGoogleButtons();
+      if (isGConnected()) {
+        syncGoogleCalendar();
+        syncGmail();
+      }
+    } else if (attempts > 0) {
+      setTimeout(() => waitForGoogleAndSync(attempts - 1), 500);
+    }
+  }
+  waitForGoogleAndSync(20); // retry up to 20x (10 seconds)
+
+  // Auto-refresh calendar every 15 minutes while Den is open
+  setInterval(() => { if (isGConnected()) syncGoogleCalendar(); }, 15 * 60 * 1000);
+}
+
+// =====================================================
+// TAB SYSTEM
+// =====================================================
+let currentTab = 'today';
+
+function switchTab(name) {
+  ['today','tasks','flint','calendar'].forEach(t => {
+    document.getElementById('pane-' + t).classList.remove('active');
+    document.getElementById('tab-btn-' + t).classList.remove('active');
+  });
+  document.getElementById('pane-' + name).classList.add('active');
+  document.getElementById('tab-btn-' + name).classList.add('active');
+  currentTab = name;
+}
+
+// =====================================================
+// TASKS
+// =====================================================
+let taskCatFilter = 'All';
+let taskStatusFilter = 'active';
+let taskSelectedIds = new Set();
+
+function buildCatSidebar() {
+  const sb = document.getElementById('cat-sidebar');
+  const counts = {};
+  CATS.forEach(c => counts[c] = 0);
+  S.tasks.filter(t => t.status !== 'done').forEach(t => { if (counts[t.category] !== undefined) counts[t.category]++; });
+  const total = S.tasks.filter(t => t.status !== 'done').length;
+
+  sb.innerHTML = `<button class="cat-btn ${taskCatFilter==='All'?'active':''}" onclick="setCatFilter('All')">All <span class="cat-count">${total}</span></button>` +
+    CATS.map(c => `<button class="cat-btn ${taskCatFilter===c?'active':''}" onclick="setCatFilter('${c}')">${c} <span class="cat-count">${counts[c]||0}</span></button>`).join('');
+}
+
+function buildCatSelect() {
+  const sel = document.getElementById('task-cat');
+  sel.innerHTML = CATS.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function setCatFilter(cat) {
+  taskCatFilter = cat;
+  buildCatSidebar();
+  renderTasks();
+}
+
+function setFilter(status, el) {
+  taskStatusFilter = status;
+  document.querySelectorAll('#filter-row .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  // Exclude any items that came from calendar sync (source:'google') - those belong in S.schedule
+  let tasks = S.tasks.filter(t => t.source !== 'google');
+
+  if (taskCatFilter !== 'All') tasks = tasks.filter(t => t.category === taskCatFilter);
+  if (taskStatusFilter === 'active')  tasks = tasks.filter(t => t.status !== 'done');
+  else if (taskStatusFilter === 'done')    tasks = tasks.filter(t => t.status === 'done');
+  else if (taskStatusFilter === 'urgent')  tasks = tasks.filter(t => t.urgent && t.status !== 'done');
+  else if (taskStatusFilter === 'waiting') tasks = tasks.filter(t => t.category === 'Waiting On' && t.status !== 'done');
+
+  tasks = [...tasks].sort((a,b) => {
+    if (a.status==='done' && b.status!=='done') return 1;
+    if (b.status==='done' && a.status!=='done') return -1;
+    if (a.urgent && !b.urgent) return -1;
+    if (b.urgent && !a.urgent) return 1;
+    return a.createdAt - b.createdAt;
+  });
+
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty-state">No tasks here.</div>';
+    taskSelectedIds.clear();
+    return;
+  }
+
+  const selCount = taskSelectedIds.size;
+  const bulkBar = selCount > 0 ? `
+    <div class="task-bulk-bar">
+      <strong>${selCount}</strong>&nbsp;selected.
+      <button class="task-bulk-btn done-btn" onclick="bulkTaskDone()">Mark done</button>
+      <button class="task-bulk-btn urg-btn"  onclick="bulkTaskUrgent()">Toggle urgent</button>
+      <button class="task-bulk-btn del-btn"  onclick="bulkTaskDelete()">Delete</button>
+      <button class="task-bulk-btn" style="background:var(--surface);color:var(--muted);margin-left:auto" onclick="taskSelectedIds.clear();renderTasks()">Clear</button>
+    </div>` : '';
+
+  list.innerHTML = bulkBar + tasks.map(t => {
+    const sel = taskSelectedIds.has(t.id);
+    const cls = [
+      'task-item',
+      t.status === 'done' ? 'is-done' : '',
+      t.urgent ? 'is-urgent' : '',
+      t.category === 'Waiting On' ? 'is-waiting' : '',
+      sel ? 'is-selected' : ''
+    ].filter(Boolean).join(' ');
+
+    const checkSvg = '<svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+
+    return `
+    <div class="${cls}" id="ti-${t.id}">
+      <button class="task-done-btn" onclick="toggleTask('${t.id}')" title="Mark complete">
+        ${t.status==='done' ? checkSvg : ''}
+      </button>
+      <input type="checkbox" class="task-select-cb" ${sel?'checked':''} onchange="toggleTaskSel('${t.id}')" title="Select for bulk action">
+      <div class="task-body">
+        <div class="task-text" contenteditable="false"
+             onclick="startTaskEdit('${t.id}', this)"
+             onblur="saveTaskEdit('${t.id}', this)"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+             title="Click to edit">${esc(t.text)}</div>
+        <div class="task-tags">
+          <span class="tag">${esc(t.category)}</span>
+          ${t.topic && t.topic !== 'General' ? `<span class="tag" style="color:var(--waiting)">${esc(t.topic)}</span>` : ''}
+          ${t.urgent ? '<span class="tag urgent">Urgent</span>' : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="task-act-btn" onclick="toggleUrgent('${t.id}')" title="Toggle urgent">${t.urgent?'&#x26A0;':'&#x25B3;'}</button>
+        <button class="task-act-btn del" onclick="deleteTask('${t.id}')" title="Delete">&#x2715;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTaskSel(id) {
+  if (taskSelectedIds.has(id)) taskSelectedIds.delete(id);
+  else taskSelectedIds.add(id);
+  renderTasks();
+}
+
+function startTaskEdit(id, el) {
+  el.contentEditable = 'true';
+  el.focus();
+  // Move cursor to end
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function saveTaskEdit(id, el) {
+  el.contentEditable = 'false';
+  const newText = el.textContent.trim();
+  if (!newText) { renderTasks(); return; }
+  const t = S.tasks.find(x => x.id === id);
+  if (t && t.text !== newText) {
+    t.text = newText;
+    save();
+    renderTop3();
+  }
+}
+
+function bulkTaskDone() {
+  taskSelectedIds.forEach(id => {
+    const t = S.tasks.find(x => x.id === id);
+    if (t) { t.status = 'done'; t.completedAt = Date.now(); }
+  });
+  taskSelectedIds.clear();
+  save(); buildCatSidebar(); renderTasks(); renderTop3();
+}
+
+function bulkTaskDelete() {
+  if (!confirm(`Delete ${taskSelectedIds.size} task(s)?`)) return;
+  S.tasks = S.tasks.filter(t => !taskSelectedIds.has(t.id));
+  taskSelectedIds.clear();
+  save(); buildCatSidebar(); renderTasks(); renderTop3();
+}
+
+function bulkTaskUrgent() {
+  taskSelectedIds.forEach(id => {
+    const t = S.tasks.find(x => x.id === id);
+    if (t) t.urgent = !t.urgent;
+  });
+  taskSelectedIds.clear();
+  save(); renderTasks(); renderTop3();
+}
+
+function addTaskFromInput() {
+  const input = document.getElementById('task-input');
+  const cat = document.getElementById('task-cat').value;
+  const urgent = document.getElementById('task-urgent').checked;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const task = { id: uid(), text, category: cat, urgent, status: 'active', createdAt: Date.now() };
+  S.tasks.push(task);
+  save();
+  input.value = '';
+  document.getElementById('task-urgent').checked = false;
+  buildCatSidebar();
+  renderTasks();
+  renderTop3();
+  toast('Task added.');
+}
+
+function toggleTask(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === 'done' ? 'active' : 'done';
+  t.completedAt = t.status === 'done' ? Date.now() : null;
+  save();
+  renderTasks();
+  renderTop3();
+  buildCatSidebar();
+}
+
+function toggleUrgent(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.urgent = !t.urgent;
+  save();
+  renderTasks();
+  renderTop3();
+}
+
+function deleteTask(id) {
+  S.tasks = S.tasks.filter(x => x.id !== id);
+  save();
+  buildCatSidebar();
+  renderTasks();
+  renderTop3();
+}
+
+function addTaskDirect(text, category, urgent, topic) {
+  const task = { id: uid(), text, category: category || 'Life Systems and Admin', topic: topic || '', urgent: !!urgent, status: 'active', createdAt: Date.now() };
+  S.tasks.push(task);
+  save();
+  buildCatSidebar();
+  renderTasks();
+  renderTop3();
+}
+
+// =====================================================
+// TODAY SCHEDULE
+// =====================================================
+function renderTodayEvents() {
+  const t = today();
+  const events = (S.schedule[t] || []).slice().sort((a,b) => a.time.localeCompare(b.time));
+  const list = document.getElementById('event-list');
+
+  if (!events.length) {
+    list.innerHTML = '<div class="empty-state">No events yet. Add one above.</div>';
+    return;
+  }
+
+  list.innerHTML = events.map(ev => `
+    <div class="event-item">
+      <span class="event-time">${ev.time || '--'}</span>
+      <span class="event-title">${esc(ev.title)}</span>
+      <button class="event-del" onclick="deleteEvent('${ev.id}')">&#x2715;</button>
+    </div>`
+  ).join('');
+}
+
+function addEvent() {
+  const time = document.getElementById('ev-time').value;
+  const title = document.getElementById('ev-title').value.trim();
+  if (!title) return;
+
+  const t = today();
+  if (!S.schedule[t]) S.schedule[t] = [];
+  S.schedule[t].push({ id: uid(), time: time || '', title });
+  save();
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-time').value = '';
+  renderTodayEvents();
+  renderCalendar();
+}
+
+function deleteEvent(eid) {
+  const t = today();
+  if (S.schedule[t]) S.schedule[t] = S.schedule[t].filter(e => e.id !== eid);
+  save();
+  renderTodayEvents();
+  renderCalendar();
+}
+
+function addEventDirect(date, time, title) {
+  if (!S.schedule[date]) S.schedule[date] = [];
+  S.schedule[date].push({ id: uid(), time: time || '', title });
+  save();
+  if (date === today()) renderTodayEvents();
+  renderCalendar();
+}
+
+// =====================================================
+// TOP 3 & WAITING ON
+// =====================================================
+function renderTop3() {
+  const top = S.tasks
+    .filter(t => t.status !== 'done')
+    .sort((a,b) => (b.urgent?1:0) - (a.urgent?1:0) || a.createdAt - b.createdAt)
+    .slice(0, 3);
+
+  const el = document.getElementById('top3');
+  if (!top.length) { el.innerHTML = '<div class="empty-state">No tasks yet.</div>'; return; }
+
+  el.innerHTML = top.map((t, i) => `
+    <div class="top3-item" onclick="switchTab('tasks')">
+      <div class="top3-num">${i+1}</div>
+      <div class="top3-body">
+        <div class="text">${esc(t.text)}</div>
+        <div class="cat">${esc(t.category)}${t.urgent?' · Urgent':''}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderWaitingOn() {
+  const items = S.waitingOn;
+  const el = document.getElementById('wo-list');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Nothing waiting.</div>'; return; }
+
+  el.innerHTML = items.map(w => `
+    <div class="wo-item">
+      <div class="wo-person">${esc(w.person)}</div>
+      <div class="wo-what">${esc(w.what)}</div>
+      <div class="wo-project">${esc(w.project||'')}${w.date?' · '+esc(w.date):''}</div>
+    </div>`
+  ).join('');
+}
+
+function addWaitingOn(person, what, date, project) {
+  S.waitingOn.push({ id: uid(), person, what, date: date||'', project: project||'' });
+  save();
+  renderWaitingOn();
+}
+
+// =====================================================
+// CALENDAR
+// =====================================================
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function renderCalendar() {
+  const label = document.getElementById('cal-label');
+  const grid = document.getElementById('cal-grid');
+  if (!label || !grid) return;
+
+  label.textContent = fmtMonth(calYear, calMonth);
+
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const t = today();
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  let html = days.map(d => `<div class="cal-hdr">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) {
+    const day = daysInPrev - firstDay + i + 1;
+    html += `<div class="cal-day other"><div class="cal-num">${day}</div></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === t;
+    const evs = S.schedule[dateStr] || [];
+    html += `<div class="cal-day${isToday?' today':''}" onclick="calDayClick('${dateStr}')">
+      <div class="cal-num">${d}</div>
+      ${evs.slice(0,3).map(e => `<div class="cal-ev">${esc(e.time?e.time+' ':'')}${esc(e.title)}</div>`).join('')}
+      ${evs.length > 3 ? `<div class="cal-ev">+${evs.length-3} more</div>` : ''}
+    </div>`;
+  }
+
+  const remaining = 42 - firstDay - daysInMonth;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other"><div class="cal-num">${i}</div></div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function calDayClick(dateStr) {
+  const evs = S.schedule[dateStr] || [];
+  const label = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' });
+  const msg = evs.length
+    ? `${label}\n${evs.map(e => `${e.time||'--'} ${e.title}`).join('\n')}`
+    : `Nothing scheduled for ${label}.`;
+  alert(msg);
+}
+
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+// =====================================================
+// FLINT
+// =====================================================
+let pendingFile = null;
+let flintPendingActions = null;
+let pendingTaskPool = [];
+let selectedTaskIds = new Set();
+let editModeActive = false;
+
+function initFlint() {
+  if (!S.flintHistory.length) {
+    const name = S.settings.name || 'Stu';
+    const ot = S.ritual[today()]?.oneThing || '--';
+    addFlintMsg('flint', `Hey ${name}. Today's One Thing is: "${ot}". What do you need?`);
+  } else {
+    renderFlintMsgs();
+  }
+}
+
+function addFlintMsg(role, content) {
+  const msg = { id: uid(), role, content, ts: Date.now() };
+  S.flintHistory.push(msg);
+  save();
+  renderFlintMsgs();
+}
+
+function renderFlintMsgs() {
+  const container = document.getElementById('flint-msgs');
+  if (!container) return;
+
+  container.innerHTML = S.flintHistory.map(m => {
+    const isUser = m.role === 'user';
+    const content = formatFlintContent(m.content);
+    return `
+    <div class="msg ${isUser?'user':''}">
+      <div class="msg-av">${isUser?'S':'F'}</div>
+      <div class="msg-bubble">${content}</div>
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function formatFlintContent(text) {
+  // Convert markdown-like text to HTML, strip JSON blocks from display
+  let html = esc(text);
+
+  // Remove JSON action block from display
+  html = html.replace(/```json[\s\S]*?```/g, '<em style="color:var(--muted);font-size:12px">[Task list below]</em>');
+
+  // Basic markdown
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  html = `<p>${html}</p>`;
+  html = html.replace(/<p><\/p>/g, '');
+
+  return html;
+}
+
+function handleFlintKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendFlint();
+  }
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function detectIntent(text) {
+  const t = text.toLowerCase();
+  if (/approve|add these|apply|save these|add to|yes|confirm|yep|do it/.test(t)) return 'approve';
+  if (/delete|remove|ditch|boot|trash|kill|no|skip|drop/.test(t)) return 'delete';
+  if (/edit|change|modify|update|rename|fix/.test(t)) return 'edit';
+  return null;
+}
+
+// =====================================================
+// RTDL FILE PARSING (direct import, no AI)
+// =====================================================
+
+// Keyword-to-topic lookup (checked in order)
+const TOPIC_KEYWORDS = [
+  ['Fat Boy','Fat Boy Partnership'],['Mystical','Mystical'],['Victoria Day','Victoria Day'],
+  ['Diwali','Diwali'],['TDG packaging','Mystical'],['retail fireworks','Retail Expansion'],
+  ['retail margins','Retail Expansion'],['retail division','Retail Expansion'],
+  ['retail stores','Retail Expansion'],['trailer expansion','Fat Boy Partnership'],
+  ['wholesale licensing','Retail Expansion'],['40-foot trailer','Retail Expansion'],
+  ['consignment','Retail Expansion'],['SmileView','SmileView Dental'],
+  ['dental X-ray','SmileView Dental'],['cavity','Dental'],['OHIP','OHIP'],
+  ['ambulance','OHIP'],['Quicken Lube','Quicken Lube'],['small claims','Quicken Lube'],
+  ['Talk To Us Tuesday','Talk To Us Tuesday'],['Ivan Grose','Ivan Grose Tribute'],
+  ['Victory Fund','Victory Fund'],['Liberalist','Liberalist'],
+  ['pancake fundraiser','Fundraising'],['fundraising','Fundraising'],
+  ['riding association','Riding Association'],['Oshawa Kicks','Oshawa Kicks'],
+  ['accountability meeting','Accountability'],['BC anniversary','BC Anniversary Trip'],
+  ['anniversary trip','BC Anniversary Trip'],['Prince Rupert','BC Anniversary Trip'],
+  ['Haida Gwaii','BC Anniversary Trip'],['half marathon','BC Anniversary Trip'],
+  ['salmon fishing','BC Anniversary Trip'],['British Columbia','BC Anniversary Trip'],
+  ['QR code','QR Code Project'],['Flint Avenue','Flint Avenue'],
+];
+
+function extractTopic(text, category) {
+  // 1. Street address: 3-5 digits + street words
+  const addr = text.match(/\b(\d{2,5}(?:\s+\w+){1,4}(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Boulevard|Blvd\.?|Drive|Dr\.?|Lane|Way|Court|Ct\.?|North|South|East|West))\b/i);
+  if (addr) return addr[1].replace(/\s+/g,' ').trim();
+
+  // 2. "X and Y" compound location/property names
+  const compound = text.match(/\b([A-Z][a-zA-Z']+\s+and\s+[A-Z][a-zA-Z\s]+?(?:Road|Street|Ave|North|South)?)\b/);
+  if (compound && compound[1].length < 50) return compound[1].trim();
+
+  // 3. Keyword lookup table
+  for (const [kw, topic] of TOPIC_KEYWORDS) {
+    if (text.toLowerCase().includes(kw.toLowerCase())) return topic;
+  }
+
+  // 4. Person name: two consecutive capitalized words (filter out category-like words)
+  const skipPhrases = ['Real Estate','Life Systems','Legal Admin','Family Personal','House Personal','Burn The Sky','Pumpkin Patch','Roll Todo'];
+  const persons = [...text.matchAll(/\b([A-Z][a-z]+(?:-[A-Z][a-z]+)?\s+[A-Z][a-z]+(?:-[A-Z][a-z]+)?)\b/g)].map(m => m[1]);
+  const person = persons.find(p => !skipPhrases.some(s => p.includes(s.split(' ')[0])));
+  if (person) return person;
+
+  return 'General';
+}
+
+// Parse tab-separated RTDL file (Category | Task | ... columns)
+function parseRTDLTSV(content) {
+  const lines = content.split(/\r?\n/);
+  if (!lines.length) return null;
+  const header = lines[0].split('\t').map(h => h.trim().toLowerCase().replace(/[^a-z]/g,''));
+  const catIdx = header.findIndex(h => h === 'category');
+  const taskIdx = header.findIndex(h => h.startsWith('task'));
+  const topicIdx = header.findIndex(h => h === 'topic');
+  if (catIdx === -1 || taskIdx === -1) return null;
+
+  const tasks = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split('\t');
+    const rawTask = (cols[taskIdx] || '').replace(/^"|"$/g,'').trim();
+    let category = (cols[catIdx] || '').trim();
+    if (!rawTask || !category) continue;
+    const text = rawTask.replace(/^[?•·\-–—\s\*☐☑✓✗]+/, '').replace(/\?(?=\S)/g,"'").trim();
+    if (!text) continue;
+    // Remap Appointments → Family and Personal (appointments are tasks, not calendar events)
+    if (category === 'Appointments') category = 'Family and Personal';
+    const topicRaw = topicIdx >= 0 ? (cols[topicIdx] || '').trim() : '';
+    const topic = topicRaw || extractTopic(text, category);
+    tasks.push({ text, category, topic, urgent: false });
+  }
+  return tasks.length ? tasks : null;
+}
+
+// Parse plain-text RTDL file (category headers + bullet tasks)
+function parseRTDLPlainText(content) {
+  const VALID_CATS = ['Real Estate','Burn The Sky','CarGoThenWeGo','Pumpkin Patch',
+    'UNSPUN','Politics','Family and Personal','House and Personal Finance',
+    'Life Systems and Admin','Legal and Admin','Waiting On','Appointments'];
+  const lines = content.split(/\r?\n/);
+  const tasks = [];
+  let cat = '';
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    // Category header
+    const matchedCat = VALID_CATS.find(c => t === c || t.replace(/\s+/g,' ') === c);
+    if (matchedCat) { cat = matchedCat; continue; }
+    // "Month Day - Added (Category):" pattern
+    const addedMatch = t.match(/Added\s*\((.+?)\)/i);
+    if (addedMatch) { const c = VALID_CATS.find(v => v.toLowerCase() === addedMatch[1].toLowerCase()); if (c) { cat = c; continue; } }
+    // Task bullet
+    const taskMatch = t.match(/^[?•·\-–—\*\☐✓✗]\s+(.+)/);
+    if (taskMatch && cat) {
+      const text = taskMatch[1].replace(/\?(?=\S)/g,"'").trim();
+      // Remap Appointments → Family and Personal
+      const finalCat = cat === 'Appointments' ? 'Family and Personal' : cat;
+      if (text) tasks.push({ text, category: finalCat, topic: extractTopic(text, finalCat), urgent: false });
+    }
+  }
+  return tasks.length ? tasks : null;
+}
+
+// Detect and parse any supported RTDL file format
+function parseRTDLFile(content) {
+  // TSV with header row containing 'category' and 'task'
+  const firstLine = content.split(/\r?\n/)[0] || '';
+  if (firstLine.includes('\t') && /category/i.test(firstLine) && /task/i.test(firstLine)) {
+    return parseRTDLTSV(content);
+  }
+  // Plain text with known category headers
+  const cats = ['Real Estate','Burn The Sky','CarGoThenWeGo','Pumpkin Patch','UNSPUN',
+    'Politics','Family and Personal','House and Personal Finance',
+    'Life Systems and Admin','Legal and Admin','Waiting On','Appointments'];
+  if (cats.some(c => content.includes(c))) {
+    return parseRTDLPlainText(content);
+  }
+  return null; // not an RTDL file - treat as transcript
+}
+
+async function sendFlint() {
+  const input = document.getElementById('flint-input');
+  const btn = document.getElementById('send-btn');
+  let text = input.value.trim();
+
+  if (!text && !pendingFile) return;
+
+  // Route to task operations if tasks are selected and intent is clear
+  if (selectedTaskIds.size > 0 && text && !pendingFile) {
+    const intent = detectIntent(text);
+    if (intent === 'approve') { input.value = ''; approveSelectedTasks(); return; }
+    if (intent === 'delete')  { input.value = ''; deleteSelectedTasks();  return; }
+    if (intent === 'edit')    { input.value = ''; editSelectedTasks();    return; }
+  }
+
+  // Direct RTDL file import - bypass AI entirely
+  if (pendingFile) {
+    const directTasks = parseRTDLFile(pendingFile.content);
+    if (directTasks && directTasks.length) {
+      const fname = pendingFile.name;
+      clearUpload();
+      input.value = '';
+      input.style.height = 'auto';
+      pendingTaskPool = directTasks.map(t => ({...t, _id: uid()}));
+      selectedTaskIds = new Set(pendingTaskPool.map(t => t._id));
+      editModeActive = false;
+      flintPendingActions = { action: 'add_tasks', tasks: directTasks };
+      addFlintMsg('user', `Import RTDL: ${fname}`);
+      addFlintMsg('flint', `${pendingTaskPool.length} tasks loaded from ${fname}. All selected. Deselect any you don't want, then type "approve".`);
+      renderTaskPanel();
+      return;
+    }
+  }
+
+  let userMsg = text;
+
+  if (pendingFile) {
+    userMsg = `[Transcript: ${pendingFile.name}]\n\n${pendingFile.content}\n\n${text ? 'Note: ' + text + '\n\n' : ''}Process this transcript. Output ONLY the JSON block. No summary, no commentary, no praise. Just the JSON.`;
+    clearUpload();
+  }
+
+  input.value = '';
+  input.style.height = 'auto';
+  addFlintMsg('user', text || 'Process this transcript.');
+
+  btn.disabled = true;
+
+  // Show typing indicator
+  const typingId = 'typing-' + uid();
+  const typingEl = document.createElement('div');
+  typingEl.id = typingId;
+  typingEl.className = 'msg';
+  typingEl.innerHTML = '<div class="msg-av">F</div><div class="msg-bubble"><div class="dots"><span></span><span></span><span></span></div></div>';
+  document.getElementById('flint-msgs').appendChild(typingEl);
+  document.getElementById('flint-msgs').scrollTop = 99999;
+
+  try {
+    const reply = await callClaude(userMsg);
+    typingEl.remove();
+    parseFlintActions(reply);
+    // If tasks were extracted, show a clean count message and render the panel
+    if (pendingTaskPool.length) {
+      addFlintMsg('flint', `${pendingTaskPool.length} tasks extracted. Review below, deselect any you don't want, then type "approve".`);
+      renderTaskPanel();
+    } else {
+      // No tasks found - show the reply (chat response or debug info)
+      addFlintMsg('flint', reply);
+    }
+  } catch(err) {
+    typingEl.remove();
+    const msg = err.message.includes('rate_limit')
+      ? "You've exceeded that tiny limit again Stu. Give it a sec and try again."
+      : `Error reaching Claude: ${err.message}. Check your API key in Settings.`;
+    addFlintMsg('flint', msg);
+  }
+
+  btn.disabled = false;
+}
+
+async function callClaude(userMsg) {
+  // Pull from dedicated slot if somehow dropped from S
+  const apiKey = S.settings.apiKey || localStorage.getItem(API_KEY_STORE) || '';
+  if (apiKey && !S.settings.apiKey) S.settings.apiKey = apiKey; // restore to S
+  if (!apiKey) throw new Error('No API key. Add it in Settings.');
+
+  const ot = S.ritual[today()]?.oneThing || 'Not set';
+  const taskSummary = S.tasks
+    .filter(t => t.status !== 'done')
+    .slice(0, 30)
+    .map(t => `[${t.category}]${t.urgent?'[URGENT]':''} ${t.text}`)
+    .join('\n');
+
+  const todayEvents = (S.schedule[today()] || [])
+    .slice().sort((a,b) => a.time.localeCompare(b.time))
+    .map(e => `${e.time || 'All day'} - ${e.title}`)
+    .join('\n');
+
+  // CRITICAL: Do NOT inject task lists into the system prompt.
+  // Flint's only job is to extract tasks FROM transcripts, not to reference
+  // existing tasks. Injecting tasks caused Flint to hallucinate them as
+  // active items and recommend phantom work.
+  const systemWithContext = FLINT_SYSTEM +
+    `\n\nCurrent date: ${today()}` +
+    `\nToday's One Thing: ${ot || 'not set'}`;
+
+  // Build messages for API.
+  // Exclude the last entry in history - it's the display-only user message just added
+  // by addFlintMsg. We push the full userMsg (which may contain transcript content)
+  // as the real final turn so the API never sees two consecutive user messages.
+  let apiMsgs = S.flintHistory
+    .slice(0, -1)
+    .filter(m => m.role !== 'flint' || m.content)
+    .slice(-19)
+    .map(m => ({ role: m.role === 'flint' ? 'assistant' : 'user', content: m.content }));
+
+  // Anthropic requires the first message to be 'user'. Strip any leading assistant turns.
+  while (apiMsgs.length && apiMsgs[0].role === 'assistant') apiMsgs.shift();
+
+  apiMsgs.push({ role: 'user', content: userMsg });
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 8192,
+      temperature: 0,
+      system: systemWithContext,
+      messages: apiMsgs
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText);
+  }
+
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+// Parse a numbered text task list that Flint sometimes returns instead of JSON.
+// Handles: "Category (N tasks)\n1. Task text\n2. Task text (URGENT)"
+// Also handles: "Category - Subtopic (N tasks)" where subtopic becomes the topic.
+function parseTextTaskList(text) {
+  const VALID_CATS = ['Real Estate','Burn The Sky','CarGoThenWeGo','Pumpkin Patch',
+    'UNSPUN','Politics','Life Systems and Admin','Family and Personal',
+    'House and Personal Finance','Legal and Admin','Waiting On','Appointments'];
+  const lines = text.split('\n');
+  const tasks = [];
+  let currentCat = '';
+  let subtopic = '';
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    if (/^type "approve"/i.test(t) || /^tell me which/i.test(t)) continue;
+
+    // Category header line: "Real Estate (5 tasks)" or "Real Estate - Downtown Market (2 tasks)"
+    let catMatched = false;
+    for (const cat of VALID_CATS) {
+      if (t.toLowerCase().startsWith(cat.toLowerCase())) {
+        currentCat = cat;
+        const subMatch = t.match(new RegExp('^' + cat.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\s*-\\s*([^(\\n]+)', 'i'));
+        subtopic = subMatch ? subMatch[1].trim() : '';
+        catMatched = true;
+        break;
+      }
+    }
+    if (catMatched) continue;
+
+    // Numbered task line: "1. Task text" or "1. Task text (URGENT)"
+    const taskMatch = t.match(/^(\d+)\.\s+(.+)/);
+    if (taskMatch && currentCat) {
+      let taskText = taskMatch[2].trim();
+      const urgent = /\(URGENT\)/i.test(taskText);
+      taskText = taskText.replace(/\s*\(URGENT\)/i, '').trim();
+      const topic = subtopic || extractTopic(taskText, currentCat);
+      tasks.push({ text: taskText, category: currentCat, topic, urgent });
+    }
+  }
+  return tasks.length ? tasks : null;
+}
+
+function parseFlintActions(text) {
+  flintPendingActions = null;
+  pendingTaskPool = [];
+  selectedTaskIds = new Set();
+  editModeActive = false;
+
+  // Try JSON block first (preferred format)
+  const match = text.match(/```json\s*([\s\S]*?)\s*```/);
+  if (match) {
+    try {
+      const cleaned = match[1].replace(/,\s*([}\]])/g, '$1');
+      const parsed = JSON.parse(cleaned);
+      const tasks = parsed.tasks || (Array.isArray(parsed) ? parsed : null);
+      if (tasks && tasks.length) {
+        flintPendingActions = { action: 'add_tasks', tasks };
+        pendingTaskPool = tasks.map(t => ({...t, _id: uid(), topic: t.topic || 'General'}));
+        selectedTaskIds = new Set(pendingTaskPool.map(t => t._id));
+        return;
+      }
+    } catch(e) { /* fall through to text parser */ }
+  }
+
+  // Fallback: parse the numbered text list format Flint sometimes uses
+  const textTasks = parseTextTaskList(text);
+  if (textTasks && textTasks.length) {
+    flintPendingActions = { action: 'add_tasks', tasks: textTasks };
+    pendingTaskPool = textTasks.map(t => ({...t, _id: uid()}));
+    selectedTaskIds = new Set(pendingTaskPool.map(t => t._id));
+  }
+}
+
+function renderTaskPanel() {
+  const existing = document.getElementById('task-panel');
+  if (existing) existing.remove();
+  if (!pendingTaskPool.length) return;
+
+  // Group by topic (fall back to category if no topic)
+  const grouped = {};
+  pendingTaskPool.forEach(t => {
+    const key = t.topic || '';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(t);
+  });
+
+  // Sort groups: named topics first, then empty
+  const groupKeys = Object.keys(grouped).sort((a, b) => {
+    if (!a && b) return 1;
+    if (a && !b) return -1;
+    return a.localeCompare(b);
+  });
+
+  let rows = '';
+  groupKeys.forEach(groupKey => {
+    if (groupKey) {
+      rows += `<tr class="tp-group-row"><td colspan="4">${esc(groupKey)}</td></tr>`;
+    }
+    grouped[groupKey].forEach(t => {
+      const sel = selectedTaskIds.has(t._id);
+      const exactDup = isExactDuplicate(t.text);
+      const similar = !exactDup ? findSimilarTask(t.text) : null;
+
+      let dupBadge = '';
+      let rowClass = sel ? 'tp-selected' : '';
+      if (exactDup) {
+        dupBadge = `<span style="margin-left:8px;font-size:10px;background:rgba(255,107,53,0.18);color:var(--urgent);border-radius:4px;padding:1px 6px;vertical-align:middle">Already in RTDL</span>`;
+        rowClass += ' tp-dup';
+      } else if (similar) {
+        dupBadge = `<span style="margin-left:8px;font-size:10px;background:rgba(200,168,75,0.18);color:var(--accent);border-radius:4px;padding:1px 6px;vertical-align:middle" title="Similar: ${esc(similar.text)}">Similar exists</span>`;
+      }
+
+      rows += `<tr id="tpr-${t._id}" class="${rowClass}" style="${exactDup ? 'opacity:0.5' : ''}">
+        <td><input type="checkbox" ${sel && !exactDup ? 'checked' : ''} onchange="toggleTaskSelect('${t._id}')"/></td>
+        <td>
+          <span class="tp-task-text" id="tpt-${t._id}">${esc(t.text)}</span>
+          ${dupBadge}
+          ${t.urgent ? '<span class="tag urgent" style="margin-left:6px;vertical-align:middle">Urgent</span>' : ''}
+        </td>
+        <td class="tp-category">${esc(t.category)}</td>
+        <td class="tp-topic">${esc(t.topic || '')}</td>
+      </tr>`;
+    });
+  });
+
+  const selCount = selectedTaskIds.size;
+
+  const mount = document.getElementById('task-panel-mount');
+  if (!mount) return;
+
+  mount.innerHTML = `
+    <div id="task-panel" class="task-panel" style="border:none;border-radius:0;margin:0;display:flex;flex-direction:column;min-height:0;flex:1 1 auto;">
+      <div class="tp-header" style="flex-shrink:0;">
+        <strong>${pendingTaskPool.length}</strong> tasks extracted.
+        <button class="tp-hbtn" onclick="selectAllTasks()">Select all</button>
+        <button class="tp-hbtn" onclick="deselectAllTasks()">Deselect all</button>
+        <button class="tp-hbtn" style="margin-left:auto" onclick="clearTaskPanel()">Clear</button>
+      </div>
+      <div class="tp-footer" style="flex-shrink:0;">
+        <span class="tp-sel-count">${selCount}</span>&nbsp;selected.
+        ${editModeActive
+          ? `<button class="tp-action-btn tp-add" onclick="saveEdits()">Save edits</button>`
+          : `<button class="tp-action-btn tp-add" onclick="approveSelectedTasks()" ${selCount===0?'disabled':''}>Add selected</button>
+             <button class="tp-action-btn tp-edit" onclick="editSelectedTasks()" ${selCount===0?'disabled':''}>Edit selected</button>
+             <button class="tp-action-btn tp-del" onclick="deleteSelectedTasks()" ${selCount===0?'disabled':''}>Delete selected</button>`
+        }
+      </div>
+      <div style="flex:1 1 auto;overflow-y:auto;min-height:0;">
+        <table class="tp-table">
+          <thead><tr>
+            <th></th><th>Task</th><th>Category</th><th>Topic</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  mount.style.display = 'flex';
+}
+
+function toggleTaskSelect(id) {
+  if (selectedTaskIds.has(id)) selectedTaskIds.delete(id);
+  else selectedTaskIds.add(id);
+  renderTaskPanel();
+}
+
+function selectAllTasks() {
+  pendingTaskPool.forEach(t => selectedTaskIds.add(t._id));
+  renderTaskPanel();
+}
+
+function deselectAllTasks() {
+  selectedTaskIds.clear();
+  renderTaskPanel();
+}
+
+function clearTaskPanel() {
+  pendingTaskPool = [];
+  selectedTaskIds.clear();
+  flintPendingActions = null;
+  editModeActive = false;
+  const mount = document.getElementById('task-panel-mount');
+  if (mount) { mount.innerHTML = ''; mount.style.display = 'none'; }
+}
+
+function approveSelectedTasks() {
+  const toApprove = pendingTaskPool.filter(t => selectedTaskIds.has(t._id));
+  if (!toApprove.length) { toast('No tasks selected.'); return; }
+
+  let added = 0, skipped = 0;
+  toApprove.forEach(t => {
+    if (isExactDuplicate(t.text)) { skipped++; }
+    else { addTaskDirect(t.text, t.category, t.urgent, t.topic); added++; }
+  });
+
+  if (flintPendingActions) {
+    (flintPendingActions.waiting_on || []).forEach(w => addWaitingOn(w.person, w.what, w.date, w.project));
+    (flintPendingActions.schedule || []).forEach(s => addEventDirect(s.date, s.time, s.title));
+  }
+
+  pendingTaskPool = pendingTaskPool.filter(t => !selectedTaskIds.has(t._id));
+  selectedTaskIds.clear();
+
+  const skipNote = skipped ? ` ${skipped} duplicate(s) skipped.` : '';
+  addFlintMsg('user', `Approve selected tasks.`);
+  addFlintMsg('flint', `Done. ${added} task(s) added to your RTDL.${skipNote} Switching to Tasks.`);
+
+  if (!pendingTaskPool.length) clearTaskPanel();
+  else renderTaskPanel();
+
+  toast(`${added} added${skipped ? `, ${skipped} duplicate(s) skipped` : ''}.`);
+
+  // Switch to Tasks tab so the user can see what was just added
+  setTimeout(() => switchTab('tasks'), 400);
+}
+
+function deleteSelectedTasks() {
+  const count = selectedTaskIds.size;
+  if (!count) { toast('No tasks selected.'); return; }
+
+  pendingTaskPool = pendingTaskPool.filter(t => !selectedTaskIds.has(t._id));
+  selectedTaskIds.clear();
+
+  addFlintMsg('user', `Delete ${count} selected task(s).`);
+  addFlintMsg('flint', `Gone. ${count} task(s) removed.`);
+
+  if (!pendingTaskPool.length) clearTaskPanel();
+  else renderTaskPanel();
+}
+
+function editSelectedTasks() {
+  if (!selectedTaskIds.size) { toast('No tasks selected.'); return; }
+
+  editModeActive = true;
+  renderTaskPanel();
+
+  // Make selected cells editable after render
+  setTimeout(() => {
+    let first = true;
+    selectedTaskIds.forEach(id => {
+      const el = document.getElementById('tpt-' + id);
+      if (el) {
+        el.contentEditable = 'true';
+        if (first) { el.focus(); first = false; }
+      }
+    });
+  }, 50);
+
+  addFlintMsg('user', 'Edit selected tasks.');
+  addFlintMsg('flint', 'Click into any task text to edit. Hit "Save edits" when done.');
+}
+
+function saveEdits() {
+  selectedTaskIds.forEach(id => {
+    const el = document.getElementById('tpt-' + id);
+    if (el) {
+      const task = pendingTaskPool.find(t => t._id === id);
+      if (task) {
+        task.text = el.textContent.trim();
+        el.contentEditable = 'false';
+      }
+    }
+  });
+  editModeActive = false;
+  selectedTaskIds.clear();
+  renderTaskPanel();
+  toast('Edits saved. Select tasks and approve when ready.');
+}
+
+
+function triggerUpload() {
+  document.getElementById('file-input').click();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    pendingFile = { name: file.name, content: ev.target.result };
+    document.getElementById('upload-name').textContent = file.name;
+    document.getElementById('upload-preview').classList.remove('hidden');
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearUpload() {
+  pendingFile = null;
+  document.getElementById('upload-preview').classList.add('hidden');
+  document.getElementById('upload-name').textContent = '';
+}
+
+function clearFlintHistory() {
+  if (!confirm('Clear all Flint chat history?')) return;
+  S.flintHistory = [];
+  save();
+  initFlint();
+}
+
+function flintSummarizeRTDL() {
+  const active = S.tasks.filter(t => t.status !== 'done');
+  const bycat = {};
+  CATS.forEach(c => bycat[c] = []);
+  active.forEach(t => { if (bycat[t.category]) bycat[t.category].push(t.text); });
+  const summary = CATS.filter(c => bycat[c].length).map(c => `${c} (${bycat[c].length}): ${bycat[c].slice(0,3).join(', ')}${bycat[c].length>3?'...':''}`).join('\n');
+  const msg = `Give me a quick overview of my task list and what I should focus on today:\n\n${summary}`;
+  document.getElementById('flint-input').value = msg;
+  sendFlint();
+}
+
+function flintPriority() {
+  document.getElementById('flint-input').value = "What should I work on right now given my One Thing today?";
+  sendFlint();
+}
+
+// =====================================================
+// GOOGLE INTEGRATION
+// =====================================================
+let tokenClient = null;
+
+function initGoogleAuth() {
+  const cid = S.settings.googleClientId;
+  if (!cid || !window.google) return;
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid,
+      scope: [
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/gmail.readonly'
+      ].join(' '),
+      callback: (resp) => {
+        if (resp.error) { toast('Google sign-in failed: ' + resp.error); return; }
+        S.googleToken = resp.access_token;
+        S.googleTokenExpiry = Date.now() + (resp.expires_in * 1000);
+        save();
+        updateGoogleButtons();
+        syncGoogleCalendar();
+        syncGmail();
+        toast('Google connected.');
+      }
+    });
+  } catch(e) { console.error('Google auth init failed:', e); }
+}
+
+function isGConnected() {
+  return !!(S.googleToken && S.googleTokenExpiry > Date.now());
+}
+
+function connectGoogle() {
+  if (!window.google) { toast('Google script not loaded. Check your internet connection.'); return; }
+  if (!tokenClient) initGoogleAuth();
+  if (!tokenClient) { toast('Add your Google Client ID in Settings first.'); return; }
+  tokenClient.requestAccessToken();
+}
+
+function updateGoogleButtons() {
+  const on = isGConnected();
+  ['g-cal-btn','g-drive-btn','g-mail-btn'].forEach(id => {
+    document.getElementById(id)?.classList.toggle('connected', on);
+  });
+}
+
+// ---- Calendar ----
+function handleGoogleCalendar() {
+  if (!isGConnected()) { connectGoogle(); return; }
+  syncGoogleCalendar();
+}
+
+async function syncGoogleCalendar() {
+  if (!isGConnected()) return;
+  const t = today();
+  const start = new Date(t + 'T00:00:00').toISOString();
+  const end   = new Date(t + 'T23:59:59').toISOString();
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(start)}&timeMax=${encodeURIComponent(end)}&singleEvents=true&orderBy=startTime`,
+      { headers: { Authorization: `Bearer ${S.googleToken}` } }
+    );
+    const d = await r.json();
+    if (d.error) {
+      if (d.error.code === 401) { S.googleToken = null; save(); connectGoogle(); }
+      else toast('Calendar error: ' + d.error.message);
+      return;
+    }
+    const evs = (d.items || []).map(e => ({
+      id: 'gcal-' + e.id,
+      time: e.start?.dateTime ? fmtTimeISO(e.start.dateTime) : '',
+      title: (e.summary || 'Event') + (e.start?.dateTime ? '' : ' (all day)'),
+      source: 'google'
+    }));
+    if (!S.schedule[t]) S.schedule[t] = [];
+    S.schedule[t] = S.schedule[t].filter(e => e.source !== 'google');
+    S.schedule[t].push(...evs);
+    save();
+    renderTodayEvents();
+    renderCalendar();
+    toast(`Calendar synced. ${evs.length} event(s) loaded.`);
+  } catch(e) { toast('Calendar sync failed.'); }
+}
+
+// ---- Drive ----
+function handleGoogleDrive() {
+  if (!isGConnected()) { connectGoogle(); return; }
+  syncGoogleDrive();
+}
+
+async function syncGoogleDrive() {
+  if (!isGConnected()) return;
+  toast('Checking Drive for transcripts...');
+  try {
+    // Find Transcripts folder
+    const fr = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D'Transcripts'+and+mimeType%3D'application%2Fvnd.google-apps.folder'+and+trashed%3Dfalse&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${S.googleToken}` } }
+    );
+    const fd = await fr.json();
+    if (!fd.files?.length) { toast('No "Transcripts" folder found in Drive.'); return; }
+
+    const fid = fd.files[0].id;
+    const lr = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${fid}'+in+parents+and+trashed%3Dfalse&orderBy=modifiedTime+desc&fields=files(id,name,modifiedTime,mimeType)&pageSize=10`,
+      { headers: { Authorization: `Bearer ${S.googleToken}` } }
+    );
+    const ld = await lr.json();
+    const done = new Set(S.processedDriveFiles || []);
+    const newFiles = (ld.files || []).filter(f => !done.has(f.id));
+
+    if (!newFiles.length) { toast('No new transcripts in Drive.'); return; }
+
+    toast(`Found ${newFiles.length} new transcript(s). Sending to Flint...`);
+
+    for (const f of newFiles.slice(0, 3)) {
+      const content = await readDriveFile(f);
+      if (!content) continue;
+      pendingFile = { name: f.name, content };
+      switchTab('flint');
+      document.getElementById('flint-input').value = 'Please process this transcript.';
+      await sendFlint();
+      S.processedDriveFiles = [...(S.processedDriveFiles || []), f.id];
+      save();
+    }
+  } catch(e) { toast('Drive sync failed: ' + e.message); }
+}
+
+async function readDriveFile(f) {
+  try {
+    const url = f.mimeType === 'application/vnd.google-apps.document'
+      ? `https://www.googleapis.com/drive/v3/files/${f.id}/export?mimeType=text/plain`
+      : `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${S.googleToken}` } });
+    return await r.text();
+  } catch(e) { return null; }
+}
+
+// ---- Gmail ----
+function handleGmail() {
+  if (!isGConnected()) { connectGoogle(); return; }
+  syncGmail();
+}
+
+async function syncGmail() {
+  if (!isGConnected()) return;
+  try {
+    const r = await fetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=INBOX&labelIds=UNREAD&maxResults=1',
+      { headers: { Authorization: `Bearer ${S.googleToken}` } }
+    );
+    const d = await r.json();
+    if (d.error) return;
+    const count = d.resultSizeEstimate || 0;
+    const btn = document.getElementById('g-mail-btn');
+    if (btn) btn.textContent = count > 0 ? `✉️ ${count}` : '✉️';
+    if (count > 0) toast(`${count} unread email(s) in Gmail.`);
+    else toast('Gmail: inbox clear.');
+  } catch(e) {}
+}
+
+// =====================================================
+// SETTINGS
+// =====================================================
+function openSettings() {
+  document.getElementById('s-apikey').value = S.settings.apiKey || '';
+  document.getElementById('s-name').value = S.settings.name || 'Stu';
+  document.getElementById('s-google').value = S.settings.googleClientId || '';
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+
+function saveSettings() {
+  S.settings.apiKey = document.getElementById('s-apikey').value.trim();
+  S.settings.name = document.getElementById('s-name').value.trim() || 'Stu';
+  const newGoogleId = document.getElementById('s-google').value.trim();
+  if (newGoogleId !== S.settings.googleClientId) {
+    S.settings.googleClientId = newGoogleId;
+    tokenClient = null; // force re-init with new client ID
+  }
+  // Write API key to dedicated slot immediately, independent of main save
+  if (S.settings.apiKey) {
+    try { localStorage.setItem(API_KEY_STORE, S.settings.apiKey); } catch(e) {}
+  }
+  save();
+  closeSettings();
+  toast('Settings saved.');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `den-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAll() {
+  if (!confirm('Delete ALL Den data? This cannot be undone.')) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+}
+
+// =====================================================
+// KEYBOARD SHORTCUTS
+// =====================================================
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === '1') switchTab('today');
+  if (e.key === '2') switchTab('tasks');
+  if (e.key === '3') switchTab('flint');
+  if (e.key === '4') switchTab('calendar');
+});
+
+// =====================================================
+// INIT
+// =====================================================
+load();
+checkRitual();
+
+// Warn if opened directly from file:// (Google features won't work)
+if (window.location.protocol === 'file:') {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#c8a84b;color:#000;padding:10px 20px;font-size:13px;font-weight:600;z-index:9999;display:flex;align-items:center;gap:16px';
+  b.innerHTML = '&#x26A0;&#xFE0F; Google Calendar, Drive and Gmail won\'t work from a file. Use <strong>Launch The Den.bat</strong> to start properly.' +
+    '<button onclick="this.parentElement.remove()" style="margin-left:auto;background:rgba(0,0,0,0.2);border:none;border-radius:4px;padding:4px 12px;cursor:pointer;font-weight:700">Got it</button>';
+  document.body.appendChild(b);
+}
+</script>
+</body>
+</html>

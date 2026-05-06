@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>The Den</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #0a0a0b;
+  --graphite: #18181a;
+  --card: #1f1f22;
+  --card-hi: #26262a;
+  --border: #2c2c30;
+  --border-hi: #3a3a40;
+  --blue: #2196f3;
+  --blue-hi: #42a5f5;
+  --blue-glow: rgba(33,150,243,0.18);
+  --text: #f2f2f5;
+  --muted: #8e8e95;
+  --dim: #555;
+  --urgent: #ff5722;
+  --done: #4caf50;
+  --waiting: #00bcd4;
+  --r: 10px;
+  --font: 'Arial Nova', 'Arial', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HEADER */
+header {
+  background: var(--graphite);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 24px 0;
+  position: relative;
+}
+.brand {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 4px;
+  text-shadow: 0 0 24px var(--blue-glow);
+}
+.brand .accent { color: var(--blue); }
+.tagline { color: var(--muted); font-size: 13px; letter-spacing: 2px; margin-bottom: 14px; }
+.header-controls {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+}
+.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.icon-btn:hover { color: var(--blue); border-color: var(--blue); }
+
+nav.tabs {
+  display: flex;
+  gap: 4px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  justify-content: center;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 14px 28px;
+  font-size: 15px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* MAIN */
+main {
+  height: calc(100% - 145px);
+  overflow: hidden;
+}
+.pane {
+  display: none;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+}
+.pane.active { display: flex; }
+
+/* TODAY DASHBOARD */
+.today-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 18px;
+  padding: 18px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+.col-left, .col-right { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.panel-h {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.panel-h .h-accent { color: var(--blue); }
+.panel-h-right { margin-left: auto; font-size: 12px; }
+.panel-body { padding: 14px 18px; overflow-y: auto; }
+
+/* ONE THING */
+.one-thing {
+  background: linear-gradient(135deg, var(--graphite), var(--card));
+  border: 1px solid var(--blue);
+  box-shadow: 0 0 30px var(--blue-glow);
+}
+.one-thing .panel-h { color: var(--blue); border-bottom-color: rgba(33,150,243,0.25); }
+.one-thing-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+  width: 100%;
+  outline: none;
+  padding: 6px 0;
+  font-family: var(--font);
+}
+.one-thing-input::placeholder { color: var(--dim); font-weight: 400; }
+
+/* SCHEDULE */
+.sched-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.sched-row:last-child { border-bottom: none; }
+.sched-time {
+  font-weight: 700;
+  color: var(--blue);
+  width: 64px;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.sched-title { flex: 1; }
+.sched-src {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--graphite);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.sched-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+.sched-del:hover { color: var(--urgent); }
+
+.sched-gap {
+  background: rgba(33,150,243,0.06);
+  border: 1px dashed rgba(33,150,243,0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.sched-gap-h {
+  font-size: 11px;
+  color: var(--blue);
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.sched-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+.sched-suggestion .pill {
+  background: var(--card-hi);
+  color: var(--muted);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.sched-suggestion .add-it {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 3px 9px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.sched-suggestion .add-it:hover { background: var(--blue); color: #000; }
+
+.sched-add {
+  display: flex;
+  gap: 8px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.sched-add input[type="time"], .sched-add input[type="text"] {
+  background: var(--graphite);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 14px;
+}
+.sched-add input[type="time"] { width: 90px; }
+.sched-add input[type="text"] { flex: 1; }
+.sched-add button {
+  background: var(--blue);
+  border: none;
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--font);
+}
+
+/* TOP 3 */
+.top3-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.top3-row:last-child { border-bottom: none; }
+.top3-num {
+  width: 28px;
+  height: 28px;
+  background: var(--blue);
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.top3-body { flex: 1; min-width: 0; }
+.top3-text { font-size: 14px; line-height: 1.3; }
+.top3-cat { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; }
+
+.empty { color: var(--muted); padding: 14px 0; text-align: center; font-style: italic; font-size: 14px; }
+
+/* WAITING ON */
+.wait-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.wait-row:last-child { border-bottom: none; }
+.wait-person { color: var(--waiting); font-weight: 700; }
+.wait-meta { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; }
+
+/* FLINT PANEL (bottom of Today) - always visible, sits below grid */
+.flint-panel {
+  border-top: 2px solid var(--blue);
+  background: var(--graphite);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 360px;
+  min-height: 50px;
+  transition: height 0.2s ease;
+}
+.flint-panel.collapsed { height: 48px; }
+.flint-panel-h {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+.flint-panel-h .label {
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--blue);
+  font-size: 13px;
+}
+.flint-panel-h .hint { color: var(--muted); font-size: 12px; }
+.flint-panel-h .toggle { margin-left: auto; color: var(--muted); font-size: 18px; }
+.flint-panel-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 18px 14px;
+  gap: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+.flint-panel.collapsed .flint-panel-body { display: none; }
+.flint-textarea {
+  flex: 1;
+  min-height: 100px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+}
+.flint-textarea:focus { border-color: var(--blue); }
+.flint-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.flint-tools button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+}
+.flint-tools button:hover { border-color: var(--blue); color: var(--blue); }
+.flint-tools .primary {
+  background: var(--blue);
+  color: #000;
+  border-color: var(--blue);
+  font-weight: 700;
+}
+.flint-tools .primary:hover { background: var(--blue-hi); color: #000; }
+.flint-tools .primary:disabled { opacity: 0.4; cursor: default; }
+
+.flint-output {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 13px;
+  max-height: 280px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+.flint-output h4 {
+  color: var(--blue);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.flint-output h4:first-child { margin-top: 0; }
+.flint-output ul { padding-left: 18px; margin-bottom: 6px; }
+.flint-output li { margin-bottom: 4px; line-height: 1.4; }
+
+.flint-approve-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 0;
+}
+.flint-approve-bar button {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 13px;
+}
+.flint-approve-bar .approve-btn { background: var(--done); color: #000; }
+.flint-approve-bar .reject-btn { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+
+/* TASKS PANE */
+.tasks-wrap { display: grid; grid-template-columns: 220px 1fr; gap: 0; height: 100%; }
+.cat-sidebar {
+  background: var(--graphite);
+  border-right: 1px solid var(--border);
+  padding: 18px 14px;
+  overflow-y: auto;
+}
+.cat-h {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.cat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 2px;
+  color: var(--text);
+}
+.cat-item:hover { background: var(--card); }
+.cat-item.active { background: var(--blue-glow); color: var(--blue); font-weight: 700; }
+.cat-item .count { color: var(--muted); font-size: 12px; }
+
+.task-area { display: flex; flex-direction: column; min-width: 0; }
+.task-toolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.chip.active { background: var(--blue); color: #000; border-color: var(--blue); font-weight: 700; }
+
+.add-task-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.add-task-row input, .add-task-row select {
+  background: var(--graphite);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 14px;
+}
+.add-task-row input { flex: 1; }
+.add-task-row button {
+  background: var(--blue);
+  border: none;
+  color: #000;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--font);
+}
+
+.task-list { flex: 1; overflow-y: auto; padding: 8px 18px 24px; }
+.task-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.task-item.is-urgent { border-left: 3px solid var(--urgent); }
+.task-item.is-done { opacity: 0.5; }
+.task-item.is-done .task-text { text-decoration: line-through; color: var(--muted); }
+.task-done-btn {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-hi);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.task-done-btn:hover { border-color: var(--done); }
+.task-item.is-done .task-done-btn { background: var(--done); border-color: var(--done); }
+.task-body { flex: 1; min-width: 0; }
+.task-text {
+  font-size: 15px;
+  line-height: 1.4;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.task-text:focus { background: var(--graphite); }
+.task-tags { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--graphite);
+  color: var(--muted);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.tag.urgent { background: rgba(255,87,34,0.15); color: var(--urgent); }
+.tag.topic { background: rgba(33,150,243,0.12); color: var(--blue); }
+.task-actions { display: flex; gap: 4px; }
+.task-act {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+.task-act:hover { background: var(--graphite); color: var(--text); }
+.task-act.del:hover { color: var(--urgent); }
+
+/* CALENDAR PANE */
+.cal-wrap { padding: 18px; overflow-y: auto; flex: 1; }
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cal-head h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.cal-head button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-dow {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  font-weight: 700;
+  padding: 6px 0;
+}
+.cal-cell {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 90px;
+  position: relative;
+  cursor: pointer;
+}
+.cal-cell.is-today { border-color: var(--blue); background: var(--blue-glow); }
+.cal-cell.is-faded { opacity: 0.35; }
+.cal-num { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.cal-evt {
+  font-size: 11px;
+  background: var(--graphite);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-evt.gcal { border-left: 2px solid var(--blue); }
+
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal.active { display: flex; }
+.modal-card {
+  background: var(--graphite);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-card h2 {
+  color: var(--blue);
+  letter-spacing: 2px;
+  margin-bottom: 18px;
+  font-size: 18px;
+}
+.modal-card label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin: 14px 0 6px;
+  text-transform: uppercase;
+}
+.modal-card input, .modal-card select, .modal-card textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 14px;
+}
+.modal-actions { display: flex; gap: 8px; margin-top: 22px; }
+.modal-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 700;
+}
+.modal-actions .primary { background: var(--blue); color: #000; }
+.modal-actions .secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+/* RITUAL */
+#ritual {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  flex-direction: column;
+  padding: 24px;
+}
+#ritual.active { display: flex; }
+.ritual-step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 520px;
+  animation: fadeIn 0.4s;
+}
+.ritual-step.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.ritual-icon { font-size: 56px; margin-bottom: 18px; }
+.ritual-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
+.ritual-sub { color: var(--muted); margin-bottom: 26px; font-size: 16px; line-height: 1.6; }
+.ritual-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 18px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.ritual-btn {
+  background: var(--blue);
+  border: none;
+  color: #000;
+  padding: 14px 40px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  font-family: var(--font);
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--blue);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: 700;
+  z-index: 2000;
+  animation: slideUp 0.25s;
+  font-size: 14px;
+}
+@keyframes slideUp { from { transform: translate(-50%, 30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+.hidden { display: none !important; }
+
+/* GOOGLE STATUS PILL */
+.gpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.gpill .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+.gpill.connected .dot { background: var(--done); }
+.gpill.connected { color: var(--done); }
+
+</style>
+</head>
+<body>
+
+<!-- RITUAL -->
+<div id="ritual">
+  <div class="ritual-step" data-step="1">
+    <div class="ritual-icon">&#9889;</div>
+    <div class="ritual-title">Good morning, Stu.</div>
+    <div class="ritual-sub">One step at a time. Pull yourself together. The day starts here.</div>
+    <button class="ritual-btn" onclick="ritualNext()">Begin</button>
+  </div>
+  <div class="ritual-step" data-step="2">
+    <div class="ritual-icon">&#127919;</div>
+    <div class="ritual-title">What is your ONE THING today?</div>
+    <div class="ritual-sub">The single most important task. The one that, if done, makes today a win.</div>
+    <input class="ritual-input" id="ritual-onething" placeholder="Today I will..." onkeydown="if(event.key==='Enter')ritualNext()">
+    <button class="ritual-btn" onclick="ritualNext()">Set it</button>
+  </div>
+  <div class="ritual-step" data-step="3">
+    <div class="ritual-icon">&#128293;</div>
+    <div class="ritual-title">You're locked in.</div>
+    <div class="ritual-sub" id="ritual-recap"></div>
+    <button class="ritual-btn" onclick="ritualDone()">Open The Den</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="brand">THE <span class="accent">DEN</span></div>
+  <div class="tagline">A SYSTEM FOR STU</div>
+  <div class="header-controls">
+    <span class="gpill" id="gpill"><span class="dot"></span><span id="gpill-label">Google</span></span>
+    <button class="icon-btn" onclick="connectGoogle()" id="g-connect-btn">Connect</button>
+    <button class="icon-btn" onclick="syncAllGoogle()">Sync</button>
+    <button class="icon-btn" onclick="openSettings()">Settings</button>
+    <button class="icon-btn" onclick="startRitual()">Ritual</button>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">Today</button>
+    <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">Tasks</button>
+    <button class="tab-btn" id="tab-calendar" onclick="switchTab('calendar')">Calendar</button>
+  </nav>
+</header>
+
+<!-- MAIN -->
+<main>
+  <!-- TODAY -->
+  <div class="pane active" id="pane-today">
+    <div class="today-grid">
+      <div class="col-left">
+        <!-- ONE THING -->
+        <div class="panel one-thing">
+          <div class="panel-h">One thing today<span class="panel-h-right" id="onething-date"></span></div>
+          <div class="panel-body">
+            <input class="one-thing-input" id="onething-input" placeholder="What's the one task that wins the day?" oninput="saveOneThing()">
+          </div>
+        </div>
+
+        <!-- TODAY'S SCHEDULE -->
+        <div class="panel">
+          <div class="panel-h">Today's schedule<span class="panel-h-right" id="sched-date-label"></span></div>
+          <div class="panel-body" id="sched-body"></div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <!-- TOP 3 -->
+        <div class="panel">
+          <div class="panel-h"><span class="h-accent">&#9733;</span>Top 3 right now</div>
+          <div class="panel-body" id="top3-body"></div>
+        </div>
+
+        <!-- WAITING ON -->
+        <div class="panel">
+          <div class="panel-h">Waiting on</div>
+          <div class="panel-body" id="waiting-body"></div>
+        </div>
+
+        <!-- CALENDAR PREVIEW -->
+        <div class="panel">
+          <div class="panel-h">Next up<span class="panel-h-right" onclick="switchTab('calendar')" style="cursor:pointer;color:var(--blue)">View calendar &rarr;</span></div>
+          <div class="panel-body" id="cal-preview-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLINT BOTTOM PANEL -->
+    <div class="flint-panel collapsed" id="flint-panel">
+      <div class="flint-panel-h" onclick="toggleFlint()">
+        <span class="label">FLINT</span>
+        <span class="hint" id="flint-hint">Paste a transcript to extract tasks &middot; click to open</span>
+        <span class="toggle" id="flint-toggle">&#9650;</span>
+      </div>
+      <div class="flint-panel-body">
+        <textarea class="flint-textarea" id="flint-textarea" placeholder="Paste your Fieldy transcript here, or upload a file..."></textarea>
+        <div class="flint-tools">
+          <button onclick="document.getElementById('flint-file').click()">Upload file</button>
+          <input type="file" id="flint-file" style="display:none" onchange="handleFlintFile(event)">
+          <button class="primary" id="flint-process-btn" onclick="processTranscript()">Process transcript</button>
+          <button onclick="clearFlint()">Clear</button>
+        </div>
+        <div class="flint-output hidden" id="flint-output"></div>
+        <div class="flint-approve-bar hidden" id="flint-approve-bar">
+          <button class="approve-btn" onclick="applyFlintExtraction()">Apply all to The Den</button>
+          <button class="reject-btn" onclick="clearFlint()">Discard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="pane" id="pane-tasks">
+    <div class="tasks-wrap">
+      <aside class="cat-sidebar" id="cat-sidebar"></aside>
+      <div class="task-area">
+        <div class="task-toolbar">
+          <span class="chip active" data-status="active" onclick="setTaskFilter('active', this)">Active</span>
+          <span class="chip" data-status="urgent" onclick="setTaskFilter('urgent', this)">Urgent</span>
+          <span class="chip" data-status="done" onclick="setTaskFilter('done', this)">Done</span>
+          <span class="chip" data-status="all" onclick="setTaskFilter('all', this)">All</span>
+          <span style="margin-left:auto;color:var(--muted);font-size:12px" id="task-count"></span>
+        </div>
+        <div class="add-task-row">
+          <select id="add-task-cat"></select>
+          <input id="add-task-text" placeholder="New task..." onkeydown="if(event.key==='Enter')addTaskFromInput()">
+          <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px">
+            <input type="checkbox" id="add-task-urgent" style="width:auto"> Urgent
+          </label>
+          <button onclick="addTaskFromInput()">Add</button>
+        </div>
+        <div class="task-list" id="task-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="pane" id="pane-calendar">
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <button onclick="calPrev()">&larr;</button>
+        <h2 id="cal-title"></h2>
+        <button onclick="calNext()">&rarr;</button>
+        <button onclick="calToday()" style="margin-left:auto">Today</button>
+        <button onclick="syncGoogleCalendar()">Sync Google</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settings-modal">
+  <div class="modal-card">
+    <h2>SETTINGS</h2>
+    <label>Anthropic API key</label>
+    <input id="set-api-key" type="password" placeholder="sk-ant-...">
+    <label>Google Client ID</label>
+    <input id="set-google-id" placeholder="...apps.googleusercontent.com">
+    <label>Display name</label>
+    <input id="set-name">
+    <label>Home or office address (for proximity suggestions)</label>
+    <input id="set-home" placeholder="e.g. 123 Main St, Oshawa">
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeSettings()">Cancel</button>
+      <button class="primary" onclick="saveSettings()">Save</button>
+    </div>
+    <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+      <button onclick="exportData()" class="secondary" style="width:100%;padding:10px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:8px">Export all data (JSON)</button>
+      <button onclick="document.getElementById('import-data-file').click()" class="secondary" style="width:100%;padding:10px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:8px">Import data</button>
+      <input type="file" id="import-data-file" accept=".json" style="display:none" onchange="importData(event)">
+      <button onclick="wipeEverything()" style="width:100%;padding:10px;background:rgba(255,87,34,0.15);color:var(--urgent);border:1px solid var(--urgent);border-radius:6px;cursor:pointer;font-weight:700">WIPE ALL DATA (start fresh)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// CONSTANTS
+// =====================================================
+const STORE_KEY = 'den-v6';
+const API_KEY_STORE = 'den-v6-apikey';
+
+const CATS = [
+  'Real Estate','Burn The Sky','CarGoThenWeGo','Pumpkin Patch',
+  'UNSPUN','Politics','Life Systems and Admin','Family and Personal',
+  'House and Personal Finance','Legal and Admin'
+];
+
+// =====================================================
+// FLINT SYSTEM PROMPT - Verbatim Fieldy Intake spec
+// =====================================================
+const FLINT_SYSTEM = `You are Flint. Your one job is transcript extraction for The Den.
+
+When a transcript is pasted to you, output EXACTLY four sections in this format. No other text. No preamble. No commentary. No interpretation. No filler.
+
+A. Changes to Rolling To Do List
+- New tasks: [bullet list, each with category in brackets like [Real Estate] or [Politics]]
+- Tasks completed: [bullet list]
+- Tasks modified: [bullet list]
+- Tasks deleted: [bullet list]
+- Tasks needing priority change: [bullet list]
+
+B. Changes to Waiting On
+- [bullet list. Each line: Person | What is owed | Date referenced | Project]
+
+C. New Tasks, Appointments, Spending
+- Calls made: [bullet list]
+- Messages sent: [bullet list]
+- Purchases: [bullet list with amount if mentioned]
+- Calendar items: [bullet list with date and time if mentioned, like "2026-04-28 13:00 - Meet Bruce Snowden"]
+
+D. Transcript Summary
+A clean 2-4 sentence overview of the day. No filler. No interpretation. No extras.
+
+RULES:
+- Do not generate the Morning Cockpit.
+- Do not update master lists.
+- Do not store anything.
+- Do not ask the user questions.
+- Do not invent tasks. Only extract what the transcript explicitly contains.
+- Use these exact categories in brackets: Real Estate, Burn The Sky, CarGoThenWeGo, Pumpkin Patch, UNSPUN, Politics, Life Systems and Admin, Family and Personal, House and Personal Finance, Legal and Admin.
+- If a section has nothing to extract, write the section header followed by "None."
+
+Output the four sections and nothing else.`;
+
+// =====================================================
+// STATE
+// =====================================================
+let S = {
+  tasks: [],
+  schedule: {},  // { 'YYYY-MM-DD': [ {id, time, title, source} ] }
+  waitingOn: [],
+  oneThing: { date: '', text: '' },
+  ritualDone: { date: '' },
+  googleToken: null,
+  googleTokenExpiry: 0,
+  settings: { apiKey: '', googleClientId: '791975476945-547af7j0pbn6h28eq73qcn5rbvrdi1mm.apps.googleusercontent.com', name: 'Stu', home: '' }
+};
+let currentTab = 'today';
+let taskFilter = { status: 'active', cat: 'All' };
+let calRefDate = new Date();
+let pendingExtraction = null;
+
+// =====================================================
+// PERSISTENCE
+// =====================================================
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e) { console.error('save failed', e); }
+  if (S.settings && S.settings.apiKey) {
+    try { localStorage.setItem(API_KEY_STORE, S.settings.apiKey); } catch(e) {}
+  }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.settings) parsed.settings = Object.assign({}, S.settings, parsed.settings);
+      S = Object.assign(S, parsed);
+    }
+  } catch(e) { console.error('load failed', e); }
+  const k = localStorage.getItem(API_KEY_STORE);
+  if (k && !S.settings.apiKey) S.settings.apiKey = k;
+}
+
+// =====================================================
+// HELPERS
+// =====================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function fmtDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+function fmtTimeISO(iso) { const d = new Date(iso); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+function readableDate(s) {
+  const d = new Date(s + 'T00:00:00');
+  const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+  const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  return dow + ' ' + mon + ' ' + d.getDate();
+}
+
+// =====================================================
+// TABS
+// =====================================================
+function switchTab(name) {
+  ['today','tasks','calendar'].forEach(t => {
+    document.getElementById('pane-' + t).classList.toggle('active', t === name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  currentTab = name;
+  if (name === 'today') renderToday();
+  if (name === 'tasks') renderTasks();
+  if (name === 'calendar') renderCalendar();
+}
+
+// =====================================================
+// RITUAL
+// =====================================================
+function startRitual() {
+  document.getElementById('ritual').classList.add('active');
+  document.querySelectorAll('.ritual-step').forEach((s,i) => s.classList.toggle('active', i === 0));
+  if (S.oneThing && S.oneThing.text) {
+    document.getElementById('ritual-onething').value = S.oneThing.text;
+  }
+}
+let ritualStep = 0;
+function ritualNext() {
+  ritualStep++;
+  if (ritualStep === 1) {
+    document.querySelector('.ritual-step[data-step="1"]').classList.remove('active');
+    document.querySelector('.ritual-step[data-step="2"]').classList.add('active');
+    setTimeout(() => document.getElementById('ritual-onething').focus(), 100);
+  } else if (ritualStep === 2) {
+    const ot = document.getElementById('ritual-onething').value.trim();
+    if (!ot) return;
+    S.oneThing = { date: today(), text: ot };
+    save();
+    document.querySelector('.ritual-step[data-step="2"]').classList.remove('active');
+    document.querySelector('.ritual-step[data-step="3"]').classList.add('active');
+    document.getElementById('ritual-recap').textContent = `"${ot}" is your One Thing today. Calendar syncing now. Open The Den when you're ready.`;
+    if (isGConnected()) syncGoogleCalendar();
+  }
+}
+function ritualDone() {
+  S.ritualDone = { date: today() };
+  save();
+  document.getElementById('ritual').classList.remove('active');
+  ritualStep = 0;
+  renderToday();
+}
+
+// =====================================================
+// TODAY DASHBOARD
+// =====================================================
+function renderToday() {
+  const t = today();
+  document.getElementById('onething-date').textContent = readableDate(t);
+  document.getElementById('sched-date-label').textContent = readableDate(t);
+
+  const ot = (S.oneThing && S.oneThing.date === t) ? S.oneThing.text : '';
+  document.getElementById('onething-input').value = ot;
+
+  renderSchedule();
+  renderTop3();
+  renderWaiting();
+  renderCalPreview();
+}
+
+function saveOneThing() {
+  const v = document.getElementById('onething-input').value;
+  S.oneThing = { date: today(), text: v };
+  save();
+}
+
+function renderSchedule() {
+  const t = today();
+  const events = (S.schedule[t] || []).slice().sort((a,b) => (a.time || '99').localeCompare(b.time || '99'));
+  const body = document.getElementById('sched-body');
+
+  let html = '';
+  if (!events.length) {
+    html = '<div class="empty">Nothing scheduled today.</div>';
+  } else {
+    // Build schedule with gap suggestions
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      html += `<div class="sched-row">
+        <div class="sched-time">${esc(e.time || '--:--')}</div>
+        <div class="sched-title">${esc(e.title)}</div>
+        ${e.source === 'google' ? '<span class="sched-src">Google</span>' : ''}
+        <button class="sched-del" onclick="deleteEvent('${e.id}')">&#10005;</button>
+      </div>`;
+
+      // Gap suggestion
+      const next = events[i+1];
+      const gapMinutes = next && e.time && next.time ? minutesBetween(e.time, next.time) : 0;
+      if (gapMinutes >= 60) {
+        html += renderGapSuggestion(e.time, next.time, gapMinutes);
+      }
+    }
+    // Suggestion after the last event
+    const last = events[events.length-1];
+    if (last && last.time) {
+      const endOfDayMin = minutesBetween(last.time, '18:00');
+      if (endOfDayMin >= 60) html += renderGapSuggestion(last.time, '18:00', endOfDayMin);
+    }
+  }
+
+  // Add event row
+  html += `<div class="sched-add">
+    <input type="time" id="add-evt-time">
+    <input type="text" id="add-evt-title" placeholder="Add event or appointment..." onkeydown="if(event.key==='Enter')addEvent()">
+    <button onclick="addEvent()">+ Add</button>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+function minutesBetween(a, b) {
+  const [ah, am] = a.split(':').map(Number);
+  const [bh, bm] = b.split(':').map(Number);
+  return (bh*60 + bm) - (ah*60 + am);
+}
+
+function renderGapSuggestion(fromTime, toTime, mins) {
+  const suggestions = pickSuggestions(3);
+  if (!suggestions.length) return '';
+  let html = `<div class="sched-gap">
+    <div class="sched-gap-h">FREE WINDOW &middot; ${fromTime} &rarr; ${toTime} &middot; ${Math.round(mins/60*10)/10}h</div>`;
+  suggestions.forEach(t => {
+    html += `<div class="sched-suggestion">
+      <span>${esc(t.text)}</span>
+      <span class="pill">${esc(t.category)}</span>
+      <button class="add-it" onclick="scheduleTaskAt('${t.id}','${fromTime}')">Slot it</button>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function pickSuggestions(n, exclude) {
+  exclude = exclude || new Set();
+  // Exclude tasks already scheduled today
+  const todayEvts = (S.schedule[today()] || []).map(e => (e.title || '').toLowerCase());
+  const active = S.tasks.filter(t => {
+    if (t.status === 'done') return false;
+    if (exclude.has(t.id)) return false;
+    if (todayEvts.includes((t.text || '').toLowerCase())) return false;
+    return true;
+  });
+  const scored = active.map(t => ({
+    ...t,
+    score: (t.urgent ? 1000 : 0) + (Date.now() - t.createdAt) / 1e7
+  }));
+  scored.sort((a,b) => b.score - a.score);
+  return scored.slice(0, n);
+}
+
+function scheduleTaskAt(taskId, time) {
+  const t = S.tasks.find(x => x.id === taskId);
+  if (!t) return;
+  addEventDirect(today(), time, t.text);
+  toast('Slotted into schedule.');
+  renderToday();
+}
+
+function addEvent() {
+  const time = document.getElementById('add-evt-time').value;
+  const title = document.getElementById('add-evt-title').value.trim();
+  if (!title) return;
+  addEventDirect(today(), time, title);
+  document.getElementById('add-evt-title').value = '';
+  document.getElementById('add-evt-time').value = '';
+  renderSchedule();
+}
+
+function addEventDirect(date, time, title, source) {
+  if (!S.schedule[date]) S.schedule[date] = [];
+  S.schedule[date].push({ id: uid(), time: time || '', title, source: source || 'manual' });
+  save();
+  if (currentTab === 'calendar') renderCalendar();
+}
+
+function deleteEvent(id) {
+  const t = today();
+  S.schedule[t] = (S.schedule[t] || []).filter(e => e.id !== id);
+  save();
+  renderSchedule();
+}
+
+function renderTop3() {
+  const top = pickSuggestions(3);
+  const body = document.getElementById('top3-body');
+  if (!top.length) {
+    body.innerHTML = '<div class="empty">Nothing pending. Either you crushed it or you need to add tasks.</div>';
+    return;
+  }
+  body.innerHTML = top.map((t,i) => `
+    <div class="top3-row">
+      <div class="top3-num">${i+1}</div>
+      <div class="top3-body">
+        <div class="top3-text">${esc(t.text)}</div>
+        <div class="top3-cat">${esc(t.category)}${t.urgent ? ' &middot; URGENT' : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderWaiting() {
+  const body = document.getElementById('waiting-body');
+  if (!S.waitingOn.length) {
+    body.innerHTML = '<div class="empty">Nothing waiting.</div>';
+    return;
+  }
+  body.innerHTML = S.waitingOn.map(w => `
+    <div class="wait-row">
+      <span class="wait-person">${esc(w.person || 'Someone')}</span> &middot; ${esc(w.what || '')}
+      <div class="wait-meta">${esc(w.date || 'no date')} &middot; ${esc(w.project || 'no project')}</div>
+    </div>
+  `).join('');
+}
+
+function renderCalPreview() {
+  const body = document.getElementById('cal-preview-body');
+  const dates = Object.keys(S.schedule).filter(d => d >= today()).sort();
+  const upcoming = [];
+  for (const d of dates) {
+    if (upcoming.length >= 4) break;
+    for (const e of (S.schedule[d] || []).slice().sort((a,b) => (a.time || '99').localeCompare(b.time || '99'))) {
+      if (upcoming.length >= 4) break;
+      if (d === today()) continue;
+      upcoming.push({ date: d, ...e });
+    }
+  }
+  if (!upcoming.length) {
+    body.innerHTML = '<div class="empty">Nothing upcoming. Connect Google to pull your calendar.</div>';
+    return;
+  }
+  body.innerHTML = upcoming.map(e => `
+    <div class="sched-row" style="padding:8px 0">
+      <div class="sched-time" style="width:auto;font-size:12px">${readableDate(e.date)} ${e.time || ''}</div>
+      <div class="sched-title" style="font-size:14px">${esc(e.title)}</div>
+    </div>
+  `).join('');
+}
+
+// =====================================================
+// TASKS PANE
+// =====================================================
+function renderTasks() {
+  // populate add-task category select
+  const sel = document.getElementById('add-task-cat');
+  if (sel.options.length === 0) {
+    CATS.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      sel.appendChild(o);
+    });
+  }
+
+  // Sidebar
+  const sidebar = document.getElementById('cat-sidebar');
+  const counts = { All: 0 };
+  CATS.forEach(c => counts[c] = 0);
+  S.tasks.forEach(t => {
+    if (t.status === 'done') return;
+    counts.All++;
+    if (counts[t.category] != null) counts[t.category]++;
+  });
+  sidebar.innerHTML = '<div class="cat-h">CATEGORIES</div>' +
+    `<div class="cat-item ${taskFilter.cat==='All'?'active':''}" onclick="setCat('All')"><span>All</span><span class="count">${counts.All}</span></div>` +
+    CATS.map(c => `<div class="cat-item ${taskFilter.cat===c?'active':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')"><span>${esc(c)}</span><span class="count">${counts[c]||0}</span></div>`).join('');
+
+  // List
+  let tasks = S.tasks.slice();
+  if (taskFilter.cat !== 'All') tasks = tasks.filter(t => t.category === taskFilter.cat);
+  if (taskFilter.status === 'active') tasks = tasks.filter(t => t.status !== 'done');
+  else if (taskFilter.status === 'done') tasks = tasks.filter(t => t.status === 'done');
+  else if (taskFilter.status === 'urgent') tasks = tasks.filter(t => t.urgent && t.status !== 'done');
+
+  tasks.sort((a,b) => {
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (b.status === 'done' && a.status !== 'done') return -1;
+    if (a.urgent && !b.urgent) return -1;
+    if (b.urgent && !a.urgent) return 1;
+    return a.createdAt - b.createdAt;
+  });
+
+  document.getElementById('task-count').textContent = tasks.length + ' task' + (tasks.length === 1 ? '' : 's');
+
+  const list = document.getElementById('task-list');
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty">No tasks here.</div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => `
+    <div class="task-item ${t.urgent?'is-urgent':''} ${t.status==='done'?'is-done':''}">
+      <button class="task-done-btn" onclick="toggleDone('${t.id}')" title="Mark done">${t.status==='done' ? '<svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#000" stroke-width="2.5" fill="none"/></svg>' : ''}</button>
+      <div class="task-body">
+        <div class="task-text" contenteditable="true" onblur="saveTaskText('${t.id}', this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${esc(t.text)}</div>
+        <div class="task-tags">
+          <span class="tag">${esc(t.category)}</span>
+          ${t.topic ? `<span class="tag topic">${esc(t.topic)}</span>` : ''}
+          ${t.urgent ? '<span class="tag urgent">Urgent</span>' : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="task-act" onclick="toggleUrgent('${t.id}')" title="Toggle urgent">&#9888;</button>
+        <button class="task-act del" onclick="deleteTask('${t.id}')" title="Delete">&#10005;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setCat(c) { taskFilter.cat = c; renderTasks(); }
+function setTaskFilter(s, el) {
+  taskFilter.status = s;
+  document.querySelectorAll('.task-toolbar .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+function toggleDone(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === 'done' ? 'active' : 'done';
+  t.completedAt = t.status === 'done' ? Date.now() : null;
+  save(); renderTasks(); if (currentTab === 'today') renderToday();
+}
+function toggleUrgent(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.urgent = !t.urgent;
+  save(); renderTasks();
+}
+function deleteTask(id) {
+  S.tasks = S.tasks.filter(t => t.id !== id);
+  save(); renderTasks();
+}
+function saveTaskText(id, el) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  const v = el.textContent.trim();
+  if (v && v !== t.text) { t.text = v; save(); }
+  else el.textContent = t.text;
+}
+function addTaskFromInput() {
+  const text = document.getElementById('add-task-text').value.trim();
+  const cat = document.getElementById('add-task-cat').value;
+  const urgent = document.getElementById('add-task-urgent').checked;
+  if (!text) return;
+  S.tasks.push({ id: uid(), text, category: cat, topic: '', urgent, status: 'active', createdAt: Date.now() });
+  save();
+  document.getElementById('add-task-text').value = '';
+  document.getElementById('add-task-urgent').checked = false;
+  renderTasks();
+}
+function addTaskDirect(text, category, urgent, topic) {
+  S.tasks.push({ id: uid(), text, category: category || 'Life Systems and Admin', topic: topic || '', urgent: !!urgent, status: 'active', createdAt: Date.now() });
+}
+
+// =====================================================
+// CALENDAR PANE
+// =====================================================
+function calPrev() { calRefDate.setMonth(calRefDate.getMonth() - 1); renderCalendar(); }
+function calNext() { calRefDate.setMonth(calRefDate.getMonth() + 1); renderCalendar(); }
+function calToday() { calRefDate = new Date(); renderCalendar(); }
+
+function renderCalendar() {
+  const ref = calRefDate;
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent = monthNames[month] + ' ' + year;
+
+  const grid = document.getElementById('cal-grid');
+  const firstOfMonth = new Date(year, month, 1);
+  const startDow = firstOfMonth.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let html = ['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // Pad start
+  for (let i = 0; i < startDow; i++) {
+    const prevMonthDay = new Date(year, month, -startDow + i + 1);
+    html += renderCalCell(prevMonthDay, true);
+  }
+  // Month
+  for (let d = 1; d <= daysInMonth; d++) {
+    html += renderCalCell(new Date(year, month, d), false);
+  }
+  // Pad end
+  const totalCells = startDow + daysInMonth;
+  const endPad = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= endPad; i++) {
+    html += renderCalCell(new Date(year, month + 1, i), true);
+  }
+  grid.innerHTML = html;
+}
+
+function renderCalCell(d, faded) {
+  const dateStr = fmtDate(d);
+  const isToday = dateStr === today();
+  const events = S.schedule[dateStr] || [];
+  const evtHtml = events.slice(0, 3).map(e =>
+    `<div class="cal-evt ${e.source === 'google' ? 'gcal' : ''}" title="${esc(e.time || '')} ${esc(e.title)}">${esc(e.time || '')} ${esc(e.title)}</div>`
+  ).join('');
+  return `<div class="cal-cell ${isToday?'is-today':''} ${faded?'is-faded':''}">
+    <div class="cal-num">${d.getDate()}</div>
+    ${evtHtml}
+    ${events.length > 3 ? `<div class="cal-evt" style="background:transparent;color:var(--muted)">+${events.length-3} more</div>` : ''}
+  </div>`;
+}
+
+// =====================================================
+// FLINT TRANSCRIPT EXTRACTION
+// =====================================================
+function toggleFlint() {
+  document.getElementById('flint-panel').classList.toggle('collapsed');
+  const t = document.getElementById('flint-toggle');
+  t.innerHTML = document.getElementById('flint-panel').classList.contains('collapsed') ? '&#9650;' : '&#9660;';
+}
+function clearFlint() {
+  document.getElementById('flint-textarea').value = '';
+  document.getElementById('flint-output').classList.add('hidden');
+  document.getElementById('flint-output').innerHTML = '';
+  document.getElementById('flint-approve-bar').classList.add('hidden');
+  pendingExtraction = null;
+}
+function handleFlintFile(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    document.getElementById('flint-textarea').value = ev.target.result;
+    document.getElementById('flint-hint').textContent = 'Loaded: ' + f.name;
+    if (document.getElementById('flint-panel').classList.contains('collapsed')) toggleFlint();
+  };
+  r.readAsText(f);
+  e.target.value = '';
+}
+
+async function processTranscript() {
+  const text = document.getElementById('flint-textarea').value.trim();
+  if (!text) { toast('Paste a transcript first.'); return; }
+  const apiKey = S.settings.apiKey || localStorage.getItem(API_KEY_STORE);
+  if (!apiKey) { toast('Add your Anthropic API key in Settings.'); openSettings(); return; }
+
+  const btn = document.getElementById('flint-process-btn');
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+
+  const out = document.getElementById('flint-output');
+  out.classList.remove('hidden');
+  out.innerHTML = '<div style="color:var(--muted)">Flint is extracting...</div>';
+
+  try {
+    const reply = await callClaude(text, apiKey);
+    pendingExtraction = parseFieldyOutput(reply);
+    renderExtraction(pendingExtraction, reply);
+    document.getElementById('flint-approve-bar').classList.remove('hidden');
+  } catch(err) {
+    out.innerHTML = '<div style="color:var(--urgent)">Error: ' + esc(err.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Process transcript';
+  }
+}
+
+async function callClaude(transcript, apiKey) {
+  const systemPrompt = FLINT_SYSTEM + `\n\nCurrent date: ${today()}`;
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 4096,
+      temperature: 0,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: 'Extract from this transcript:\n\n' + transcript }]
+    })
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.content[0].text;
+}
+
+// Parse Flint's 4-section output deterministically
+function parseFieldyOutput(text) {
+  const result = { newTasks: [], completedTasks: [], modifiedTasks: [], deletedTasks: [], priorityChanges: [], waitingOn: [], calls: [], messages: [], purchases: [], calendar: [], summary: '' };
+
+  // Get section A
+  const aMatch = text.match(/A\.\s*Changes to Rolling To Do List([\s\S]*?)(?=\n\s*B\.|$)/i);
+  if (aMatch) {
+    const a = aMatch[1];
+    extractSubBullets(a, /new tasks?:?\s*([\s\S]*?)(?=\n\s*-\s*tasks?\s|$)/i).forEach(item => {
+      const t = parseBracketCategory(item);
+      if (t.text && !/^none\b/i.test(t.text)) result.newTasks.push(t);
+    });
+    extractSubBullets(a, /tasks completed:?\s*([\s\S]*?)(?=\n\s*-\s*tasks?\s|$)/i).forEach(item => {
+      if (item && !/^none\b/i.test(item)) result.completedTasks.push(parseBracketCategory(item));
+    });
+    extractSubBullets(a, /tasks modified:?\s*([\s\S]*?)(?=\n\s*-\s*tasks?\s|$)/i).forEach(item => {
+      if (item && !/^none\b/i.test(item)) result.modifiedTasks.push(parseBracketCategory(item));
+    });
+    extractSubBullets(a, /tasks deleted:?\s*([\s\S]*?)(?=\n\s*-\s*tasks?\s|$)/i).forEach(item => {
+      if (item && !/^none\b/i.test(item)) result.deletedTasks.push(item);
+    });
+    extractSubBullets(a, /tasks needing priority change:?\s*([\s\S]*?)(?=\n\s*-\s*tasks?|$)/i).forEach(item => {
+      if (item && !/^none\b/i.test(item)) result.priorityChanges.push(item);
+    });
+  }
+
+  // Section B
+  const bMatch = text.match(/B\.\s*Changes to Waiting On([\s\S]*?)(?=\n\s*C\.|$)/i);
+  if (bMatch) {
+    bulletsOf(bMatch[1]).forEach(line => {
+      if (!line || /^none\b/i.test(line)) return;
+      const parts = line.split('|').map(s => s.trim());
+      result.waitingOn.push({
+        person: parts[0] || '',
+        what: parts[1] || line,
+        date: parts[2] || '',
+        project: parts[3] || ''
+      });
+    });
+  }
+
+  // Section C
+  const cMatch = text.match(/C\.\s*New Tasks,?\s*Appointments,?\s*Spending([\s\S]*?)(?=\n\s*D\.|$)/i);
+  if (cMatch) {
+    const c = cMatch[1];
+    extractSubBullets(c, /calls made:?\s*([\s\S]*?)(?=\n\s*-\s*\w+:|$)/i).forEach(item => { if (item && !/^none\b/i.test(item)) result.calls.push(item); });
+    extractSubBullets(c, /messages sent:?\s*([\s\S]*?)(?=\n\s*-\s*\w+:|$)/i).forEach(item => { if (item && !/^none\b/i.test(item)) result.messages.push(item); });
+    extractSubBullets(c, /purchases:?\s*([\s\S]*?)(?=\n\s*-\s*\w+:|$)/i).forEach(item => { if (item && !/^none\b/i.test(item)) result.purchases.push(item); });
+    extractSubBullets(c, /calendar items:?\s*([\s\S]*?)(?=\n\s*-\s*\w+:|$)/i).forEach(item => {
+      if (!item || /^none\b/i.test(item)) return;
+      // Parse "YYYY-MM-DD HH:MM - Title" or "YYYY-MM-DD - Title" or just "Title"
+      const m = item.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}:\d{2}))?\s*[-:]\s*(.+)/);
+      if (m) result.calendar.push({ date: m[1], time: m[2] || '', title: m[3].trim() });
+      else result.calendar.push({ date: today(), time: '', title: item });
+    });
+  }
+
+  // Section D
+  const dMatch = text.match(/D\.\s*Transcript Summary([\s\S]*?)$/i);
+  if (dMatch) result.summary = dMatch[1].trim();
+
+  return result;
+}
+
+function bulletsOf(block) {
+  return block.split('\n').map(l => l.replace(/^\s*[-•·*]\s*/, '').trim()).filter(Boolean);
+}
+function extractSubBullets(block, regex) {
+  const m = block.match(regex);
+  if (!m) return [];
+  return bulletsOf(m[1]);
+}
+function parseBracketCategory(item) {
+  // "Task text [Category]" or "[Category] Task text"
+  let text = item;
+  let category = 'Life Systems and Admin';
+  let urgent = false;
+  if (/\bURGENT\b/i.test(text)) { urgent = true; text = text.replace(/\s*\(?URGENT\)?\s*/gi, ' ').trim(); }
+  const m1 = text.match(/^\[([^\]]+)\]\s*(.+)/);
+  const m2 = text.match(/^(.+?)\s*\[([^\]]+)\]\s*$/);
+  if (m1) { category = matchCat(m1[1]); text = m1[2].trim(); }
+  else if (m2) { category = matchCat(m2[2]); text = m2[1].trim(); }
+  return { text, category, urgent };
+}
+function matchCat(raw) {
+  const r = raw.toLowerCase().trim();
+  for (const c of CATS) {
+    if (c.toLowerCase() === r) return c;
+  }
+  // Substring match
+  for (const c of CATS) {
+    if (c.toLowerCase().includes(r) || r.includes(c.toLowerCase())) return c;
+  }
+  return 'Life Systems and Admin';
+}
+
+function renderExtraction(ex, raw) {
+  const out = document.getElementById('flint-output');
+  let html = '';
+  const total = ex.newTasks.length + ex.waitingOn.length + ex.calendar.length + ex.completedTasks.length + ex.modifiedTasks.length + ex.deletedTasks.length;
+  if (total === 0) {
+    html = '<div style="color:var(--urgent)">Flint returned the four sections but nothing was extracted. Raw output below:</div><pre style="background:var(--graphite);padding:10px;margin-top:8px;overflow-x:auto">' + esc(raw) + '</pre>';
+    out.innerHTML = html;
+    return;
+  }
+  if (ex.newTasks.length) {
+    html += '<h4>NEW TASKS &middot; ' + ex.newTasks.length + '</h4><ul>' +
+      ex.newTasks.map(t => `<li>${esc(t.text)} <span style="color:var(--blue);font-size:11px">[${esc(t.category)}]</span>${t.urgent?' <span style="color:var(--urgent);font-size:11px">URGENT</span>':''}</li>`).join('') + '</ul>';
+  }
+  if (ex.completedTasks.length) {
+    html += '<h4>COMPLETED &middot; ' + ex.completedTasks.length + '</h4><ul>' +
+      ex.completedTasks.map(t => `<li>${esc(t.text || t)}</li>`).join('') + '</ul>';
+  }
+  if (ex.waitingOn.length) {
+    html += '<h4>WAITING ON &middot; ' + ex.waitingOn.length + '</h4><ul>' +
+      ex.waitingOn.map(w => `<li><strong style="color:var(--waiting)">${esc(w.person)}</strong> &middot; ${esc(w.what)} <span style="color:var(--muted);font-size:11px">${esc(w.date)} ${esc(w.project)}</span></li>`).join('') + '</ul>';
+  }
+  if (ex.calendar.length) {
+    html += '<h4>CALENDAR ITEMS &middot; ' + ex.calendar.length + '</h4><ul>' +
+      ex.calendar.map(c => `<li>${esc(c.date)} ${esc(c.time)} &middot; ${esc(c.title)}</li>`).join('') + '</ul>';
+  }
+  if (ex.calls.length || ex.messages.length || ex.purchases.length) {
+    html += '<h4>ACTIVITY LOG</h4><ul>';
+    ex.calls.forEach(x => html += `<li>Call: ${esc(x)}</li>`);
+    ex.messages.forEach(x => html += `<li>Message: ${esc(x)}</li>`);
+    ex.purchases.forEach(x => html += `<li>Purchase: ${esc(x)}</li>`);
+    html += '</ul>';
+  }
+  if (ex.summary) {
+    html += '<h4>SUMMARY</h4><div style="color:var(--muted);font-style:italic">' + esc(ex.summary) + '</div>';
+  }
+  out.innerHTML = html;
+}
+
+function applyFlintExtraction() {
+  if (!pendingExtraction) return;
+  const ex = pendingExtraction;
+  let added = 0, completed = 0, deleted = 0, scheduled = 0, waiting = 0;
+
+  ex.newTasks.forEach(t => { addTaskDirect(t.text, t.category, t.urgent); added++; });
+  ex.completedTasks.forEach(c => {
+    const txt = (c.text || c).toLowerCase();
+    const match = S.tasks.find(t => t.status !== 'done' && t.text.toLowerCase().includes(txt.slice(0, 20)));
+    if (match) { match.status = 'done'; match.completedAt = Date.now(); completed++; }
+  });
+  ex.deletedTasks.forEach(d => {
+    const txt = (typeof d === 'string' ? d : d.text || '').toLowerCase();
+    const before = S.tasks.length;
+    S.tasks = S.tasks.filter(t => !t.text.toLowerCase().includes(txt.slice(0, 20)));
+    deleted += before - S.tasks.length;
+  });
+  ex.calendar.forEach(c => { addEventDirect(c.date, c.time, c.title, 'flint'); scheduled++; });
+  ex.waitingOn.forEach(w => { S.waitingOn.push({ id: uid(), ...w, createdAt: Date.now() }); waiting++; });
+
+  save();
+  clearFlint();
+  if (currentTab === 'today') renderToday();
+  if (currentTab === 'tasks') renderTasks();
+  if (currentTab === 'calendar') renderCalendar();
+  toast(`Applied: ${added} new tasks, ${completed} completed, ${deleted} deleted, ${scheduled} scheduled, ${waiting} waiting on.`);
+}
+
+// =====================================================
+// SETTINGS
+// =====================================================
+function openSettings() {
+  document.getElementById('set-api-key').value = S.settings.apiKey || '';
+  document.getElementById('set-google-id').value = S.settings.googleClientId || '';
+  document.getElementById('set-name').value = S.settings.name || '';
+  document.getElementById('set-home').value = S.settings.home || '';
+  document.getElementById('settings-modal').classList.add('active');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+function saveSettings() {
+  S.settings.apiKey = document.getElementById('set-api-key').value.trim();
+  S.settings.googleClientId = document.getElementById('set-google-id').value.trim();
+  S.settings.name = document.getElementById('set-name').value.trim();
+  S.settings.home = document.getElementById('set-home').value.trim();
+  save();
+  closeSettings();
+  toast('Settings saved.');
+  initGoogleAuth();
+}
+function wipeEverything() {
+  if (!confirm('This will DELETE all tasks, schedule, waiting-on items, and your One Thing. Settings and API key will be preserved. Continue?')) return;
+  if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+  const apiKey = S.settings.apiKey;
+  const googleClientId = S.settings.googleClientId;
+  const name = S.settings.name;
+  const home = S.settings.home;
+  S = {
+    tasks: [],
+    schedule: {},
+    waitingOn: [],
+    oneThing: { date: '', text: '' },
+    ritualDone: { date: '' },
+    googleToken: null,
+    googleTokenExpiry: 0,
+    settings: { apiKey, googleClientId, name, home }
+  };
+  save();
+  closeSettings();
+  toast('All data wiped. Fresh start.');
+  renderToday();
+  renderTasks();
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'the-den-export-' + today() + '.json';
+  a.click();
+}
+function importData(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (!confirm('This will replace ALL Den data. Continue?')) return;
+      S = Object.assign(S, parsed);
+      save();
+      toast('Data imported.');
+      renderToday();
+    } catch(err) { toast('Import failed: ' + err.message); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+}
+
+// =====================================================
+// GOOGLE INTEGRATION
+// =====================================================
+let tokenClient = null;
+function initGoogleAuth() {
+  const cid = S.settings.googleClientId;
+  if (!cid || !window.google) return;
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid,
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      callback: (resp) => {
+        if (resp.error) { toast('Google sign-in failed: ' + resp.error); return; }
+        S.googleToken = resp.access_token;
+        S.googleTokenExpiry = Date.now() + (resp.expires_in * 1000);
+        save();
+        updateGoogleUI();
+        syncGoogleCalendar();
+        toast('Google connected.');
+      }
+    });
+  } catch(e) { console.error('Google auth failed:', e); }
+}
+function isGConnected() { return !!(S.googleToken && S.googleTokenExpiry > Date.now()); }
+function connectGoogle() {
+  if (!window.google) { toast('Google script loading. Try again in a moment.'); return; }
+  if (!tokenClient) initGoogleAuth();
+  if (!tokenClient) { toast('Add Google Client ID in Settings.'); return; }
+  tokenClient.requestAccessToken();
+}
+function updateGoogleUI() {
+  const pill = document.getElementById('gpill');
+  const btn = document.getElementById('g-connect-btn');
+  if (isGConnected()) {
+    pill.classList.add('connected');
+    document.getElementById('gpill-label').textContent = 'Google connected';
+    btn.style.display = 'none';
+  } else {
+    pill.classList.remove('connected');
+    document.getElementById('gpill-label').textContent = 'Google';
+    btn.style.display = '';
+  }
+}
+async function syncGoogleCalendar() {
+  if (!isGConnected()) return;
+  // Sync today + next 30 days
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end = new Date(); end.setDate(end.getDate() + 30); end.setHours(23,59,59,999);
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${start.toISOString()}&timeMax=${end.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`,
+      { headers: { Authorization: `Bearer ${S.googleToken}` } }
+    );
+    const d = await r.json();
+    if (d.error) {
+      if (d.error.code === 401) { S.googleToken = null; save(); updateGoogleUI(); }
+      else toast('Calendar error: ' + d.error.message);
+      return;
+    }
+    // Clear all google-source events in window, repopulate
+    Object.keys(S.schedule).forEach(date => {
+      S.schedule[date] = (S.schedule[date] || []).filter(e => e.source !== 'google');
+      if (!S.schedule[date].length) delete S.schedule[date];
+    });
+    (d.items || []).forEach(e => {
+      const startStr = e.start?.dateTime || e.start?.date;
+      if (!startStr) return;
+      const dateOnly = startStr.slice(0, 10);
+      const time = e.start?.dateTime ? fmtTimeISO(e.start.dateTime) : '';
+      if (!S.schedule[dateOnly]) S.schedule[dateOnly] = [];
+      S.schedule[dateOnly].push({
+        id: 'gcal-' + e.id,
+        time,
+        title: (e.summary || 'Event') + (e.start?.dateTime ? '' : ' (all day)'),
+        source: 'google'
+      });
+    });
+    save();
+    if (currentTab === 'today') renderToday();
+    if (currentTab === 'calendar') renderCalendar();
+    toast('Calendar synced (' + (d.items || []).length + ' events).');
+  } catch(e) { toast('Calendar sync failed.'); console.error(e); }
+}
+function syncAllGoogle() {
+  if (!isGConnected()) { connectGoogle(); return; }
+  syncGoogleCalendar();
+}
+
+// =====================================================
+// INIT
+// =====================================================
+function init() {
+  load();
+  renderToday();
+  renderTasks();
+  updateGoogleUI();
+
+  // Show ritual on first load of the day
+  if (S.ritualDone?.date !== today()) {
+    setTimeout(() => startRitual(), 200);
+  }
+
+  // Wait for Google script then init auth
+  let attempts = 20;
+  const wait = () => {
+    if (window.google) {
+      initGoogleAuth();
+      updateGoogleUI();
+      if (isGConnected()) syncGoogleCalendar();
+    } else if (attempts-- > 0) setTimeout(wait, 500);
+  };
+  wait();
+
+  // Refresh calendar every 15 min
+  setInterval(() => { if (isGConnected()) syncGoogleCalendar(); }, 15 * 60 * 1000);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+COWORK BUILD BRIEF — NEW HOME SALES PLATFORM
+Project owner: Stu Smith | Pilot builder: Upperview Homes | Status: Vision phase
+
+TASK FOR COWORK
+Build a working prototype of the buyer-facing flow for a new home sales platform. Start with registration, then model selection, lot selection, exterior customization with neighbour conflict logic, and a live price display. No document generation yet. The goal is something a real buyer could click through. Build the ID registration as the central data spine that everything else connects to.
+
+---
+
+THE PROBLEM
+New home sales offices are expensive to build and operate, staffed by reps who can't know everything, limited to short open hours, and dependent on paper contracts prone to errors, typos, and lost documents. Tarion dates get missed. Development charges get quoted inaccurately. A fully built show home sits idle for years as a sunk cost nobody tracks. The process is heavy, slow, and broken.
+
+THE SOLUTION
+A fully digital new home sales platform that replaces the physical sales office entirely. Always available. More accurate than any human rep. Self-guided with AI chatbot assistance at every step. All documentation auto-populated from a single data entry point. All signatures digital. All notices automatic.
+
+---
+
+CORE FEATURES — PHASE 1
+
+1. Registration and ID verification
+Buyer registers on entry. Photo ID uploaded and tied to the deal. All personal info auto-populates every document from that point forward. This is the spine of the entire data architecture.
+
+2. AI chatbot guide
+Probing questions narrow the buyer toward the right model, lot, and upgrades. Tutorials at each step. Never wrong, never off script.
+
+3. Visual model and lot selection
+3D or rendered exterior of the home placed on the actual lot and street. Exterior selections shown in context. Neighbour brick conflict logic prevents duplicate choices between adjacent lots.
+
+4. Real-time pricing engine
+Every selection updates total price instantly. EV charger added, fireplace chosen, wall removed — all reflected live. Development charges, rebates, and incentives calculated accurately from ID and postal data.
+
+5. Document automation
+All APS documents, Tarion warranty registration, closing dates, and required notices auto-generated. Zero manual entry. Zero typos from re-keying. Digital signatures captured in sequence.
+
+6. Automatic delivery
+Signed documents sent directly to buyer's lawyer and builder's lawyer. All Tarion notices triggered automatically on predetermined dates.
+
+7. Upgrade promotion engine
+Builder can push time-limited upgrade offers to active files. Example: hardwood staircase 50% off this month. Sent automatically, tracked automatically, ordered with enough lead time to deliver.
+
+---
+
+TECHNICAL FLAGS
+
+HARD: Neighbour brick conflict logic — must query lot-specific selection history and restrict options accordingly. No two adjacent lots can have the same exterior colour or brick selection.
+
+HARD: Real-time pricing engine — must handle interdependent upgrade rules, municipal charge lookups, and rebate eligibility logic simultaneously.
+
+NOTE: Architectural compliance rules from city building department can be ingested and flagged by the system. Treat as structured data input.
+
+NOTE: ID verification at registration triggers auto-population across all downstream documents. Build this as the spine of the data architecture first.
+
+---
+
+PILOT TARGET
+Upperview Homes, Oshawa Ontario. Existing warm relationship. Current state: physical show home, 2-person sales team, paper contracts, fax machine. Build the platform around their specific workflow first. A successful Upperview case study sells every other Ontario builder.
+
+BUSINESS MODEL
+Monthly or per-project licensing fee. Target range: $2,000 to $5,000 per month per active project, or $25,000 to $50,000 flat per development onboarding. IP ownership must be established before Upperview sees detailed demos.
+
+---
+
+FIRST MILESTONE
+Build a working prototype of the buyer-facing flow: registration, model selection, lot selection, exterior customization with conflict logic, and a live price display. No document generation yet. Enough to show Upperview what this feels like to a buyer walking in for the first time.

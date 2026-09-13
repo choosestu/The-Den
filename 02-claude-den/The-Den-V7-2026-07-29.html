@@ -256,46 +256,64 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
 
 /* ── CALENDAR PANE ── */
 #pane-calendar { overflow: hidden; }
-.cal-pane { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
-.cal-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
-.cal-toolbar-title { font-size: 16px; font-weight: 400; color: var(--text); margin: 0 8px; }
-.cal-nav-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-family: var(--font); font-size: 14px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+#pane-calendar.active { padding: 24px; background: var(--bg); }
+.cal-pane { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; background: var(--card); border: 1px solid var(--border-hi); border-radius: var(--r); }
+/* Toolbar — two sides */
+.cal-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--card); }
+.cal-toolbar-left { display: flex; align-items: center; gap: 8px; }
+.cal-toolbar-right { display: flex; align-items: center; gap: 10px; }
+.cal-toolbar-title { font-size: 15px; font-weight: 400; color: var(--text); }
+.cal-header-today { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-left: 4px; }
+.cal-nav-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-family: var(--font); font-size: 16px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; line-height: 1; }
 .cal-nav-btn:hover { background: var(--surface); color: var(--text); }
 .cal-today-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: var(--r); cursor: pointer; font-family: var(--font); font-size: 12px; }
 .cal-today-btn:hover { color: var(--text); border-color: var(--border-hi); }
-.cal-sync-btn { margin-left: auto; background: none; border: none; color: var(--muted); padding: 4px 6px; border-radius: var(--r); cursor: pointer; font-family: var(--font); font-size: 12px; }
+.cal-sync-btn { background: none; border: none; color: var(--muted); padding: 4px 6px; border-radius: var(--r); cursor: pointer; font-family: var(--font); font-size: 13px; }
 .cal-sync-btn:hover { color: var(--text); }
-.cal-hdr-row { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg); }
-.cal-hdr-gutter { width: 52px; flex-shrink: 0; }
-.cal-hdr-days { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); }
-.cal-hdr-day { text-align: center; padding: 6px 4px 4px; }
-.cal-hdr-dayname { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.cal-hdr-daynum { font-size: 22px; font-weight: 300; color: var(--text); display: inline-block; width: 38px; height: 38px; line-height: 38px; border-radius: 50%; margin-top: 2px; }
+/* Week/Day toggle */
+.cal-view-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 2px; gap: 2px; }
+.cal-view-btn { background: none; border: none; color: var(--muted); padding: 4px 12px; border-radius: 2px; cursor: pointer; font-family: var(--font); font-size: 12px; font-weight: 400; }
+.cal-view-btn.active { background: var(--card); color: var(--text); }
+/* Day headers */
+.cal-hdr-row { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--card); }
+.cal-hdr-gutter { width: 56px; flex-shrink: 0; }
+.cal-hdr-days { flex: 1; display: grid; grid-template-columns: repeat(var(--cal-cols,7), 1fr); }
+.cal-hdr-day { text-align: center; padding: 8px 4px 6px; cursor: pointer; }
+.cal-hdr-day:hover .cal-hdr-daynum { background: var(--surface); }
+.cal-hdr-dayname { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.cal-hdr-daynum { font-size: 20px; font-weight: 300; color: var(--text); display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; margin-top: 3px; transition: background 0.1s; }
 .cal-hdr-day.is-today .cal-hdr-dayname { color: var(--blue); }
 .cal-hdr-day.is-today .cal-hdr-daynum { background: var(--blue); color: #fff; font-weight: 400; }
-.cal-allday-row { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg); }
-.cal-allday-label { width: 52px; flex-shrink: 0; font-size: 10px; color: var(--muted); text-align: right; padding: 4px 8px 0 0; }
-.cal-allday-cells { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); }
-.cal-allday-cell { border-left: 1px solid var(--border); padding: 2px; display: flex; flex-direction: column; gap: 1px; min-height: 22px; }
+/* All-day */
+.cal-allday-row { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--card); }
+.cal-allday-label { width: 56px; flex-shrink: 0; font-size: 10px; color: var(--muted); text-align: right; padding: 5px 8px 0 0; }
+.cal-allday-cells { flex: 1; display: grid; grid-template-columns: repeat(var(--cal-cols,7), 1fr); }
+.cal-allday-cell { border-left: 1px solid var(--border); padding: 2px 3px; display: flex; flex-direction: column; gap: 2px; min-height: 24px; }
 .cal-allday-cell:first-child { border-left: none; }
-.cal-allday-evt { font-size: 11px; background: var(--blue); color: #fff; border-radius: 2px; padding: 1px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cal-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; background: var(--bg); }
+.cal-allday-evt { font-size: 11px; background: var(--blue); color: #fff; border-radius: 2px; padding: 1px 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Time body */
+.cal-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; background: var(--card); }
 .cal-time-grid { display: flex; }
-.cal-gutter { width: 52px; flex-shrink: 0; position: relative; }
-.cal-hour-label { position: absolute; right: 6px; font-size: 10px; color: var(--muted); transform: translateY(-50%); white-space: nowrap; }
-.cal-columns { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); position: relative; }
+.cal-gutter { width: 56px; flex-shrink: 0; position: relative; }
+.cal-hour-label { position: absolute; right: 8px; font-size: 10px; color: var(--muted); transform: translateY(-50%); white-space: nowrap; letter-spacing: 0.3px; }
+.cal-columns { flex: 1; display: grid; grid-template-columns: repeat(var(--cal-cols,7), 1fr); position: relative; }
 .cal-col { border-left: 1px solid var(--border); position: relative; }
 .cal-col:first-child { border-left: none; }
+.cal-col.is-today { background: rgba(94,106,210,0.04); }
 .cal-hour-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border); }
-.cal-hour-line.half { opacity: 0.35; }
-.cal-block { position: absolute; left: 1px; right: 1px; border-radius: 2px; padding: 2px 4px; font-size: 11px; line-height: 1.3; overflow: hidden; cursor: default; box-sizing: border-box; }
-.cal-block.gcal { background: var(--blue); color: #fff; }
-.cal-block.local { background: var(--surface); color: var(--text); border-left: 2px solid var(--blue); }
-.cal-block-time { font-size: 10px; opacity: 0.75; display: block; }
+.cal-hour-line.half { border-top-color: rgba(255,255,255,0.04); }
+/* Event blocks */
+.cal-block { position: absolute; left: 2px; right: 2px; border-radius: 3px; padding: 3px 5px; font-size: 11px; line-height: 1.35; overflow: hidden; cursor: default; box-sizing: border-box; }
+.cal-block.gcal { background: #3d6fcf; color: #fff; }
+.cal-block.gcal:hover { background: #4a7ee0; }
+.cal-block.local { background: var(--blue); color: #fff; }
+.cal-block.local:hover { background: var(--blue-hi); }
+.cal-block-time { font-size: 10px; opacity: 0.8; display: block; margin-bottom: 1px; }
 .cal-block-title { font-weight: 500; }
+/* Now line */
 .cal-now-line { position: absolute; left: 0; right: 0; z-index: 10; pointer-events: none; }
-.cal-now-dot { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #ea4335; }
-.cal-now-bar { position: absolute; left: 0; right: 0; top: 0; border-top: 2px solid #ea4335; }
+.cal-now-dot { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #f44; }
+.cal-now-bar { position: absolute; left: 0; right: 0; top: 0; border-top: 1px solid #f44; }
 
 /* ── FLINT ── */
 #flint-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0a0a0a; border-top: 1px solid var(--border); z-index: 500; display: flex; flex-direction: column; transition: height 0.15s ease; height: var(--flint-h); overflow: hidden; }
@@ -634,18 +652,27 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
     <div class="pane" id="pane-calendar">
       <div class="cal-pane">
         <div class="cal-toolbar">
-          <button class="cal-nav-btn" onclick="calPrev()">&#8249;</button>
-          <button class="cal-nav-btn" onclick="calNext()">&#8250;</button>
-          <span class="cal-toolbar-title" id="cal-week-title"></span>
-          <button class="cal-today-btn" onclick="calGoToday()">Today</button>
-          <button class="cal-sync-btn" onclick="syncAllGoogle()">&#8635; Sync</button>
+          <div class="cal-toolbar-left">
+            <button class="cal-nav-btn" onclick="calPrev()">&#8249;</button>
+            <button class="cal-nav-btn" onclick="calNext()">&#8250;</button>
+            <span class="cal-toolbar-title" id="cal-week-title"></span>
+            <span class="cal-header-today" id="cal-header-today"></span>
+            <button class="cal-today-btn" onclick="calGoToday()">Today</button>
+          </div>
+          <div class="cal-toolbar-right">
+            <div class="cal-view-toggle">
+              <button class="cal-view-btn active" id="cal-btn-week" onclick="calSetView('week')">Week</button>
+              <button class="cal-view-btn" id="cal-btn-day" onclick="calSetView('day')">Day</button>
+            </div>
+            <button class="cal-sync-btn" onclick="syncAllGoogle()">&#8635;</button>
+          </div>
         </div>
         <div class="cal-hdr-row">
           <div class="cal-hdr-gutter"></div>
           <div class="cal-hdr-days" id="cal-hdr-days"></div>
         </div>
         <div class="cal-allday-row" id="cal-allday-row">
-          <div class="cal-allday-label">all-day</div>
+          <div class="cal-allday-label">all‑day</div>
           <div class="cal-allday-cells" id="cal-allday-cells"></div>
         </div>
         <div class="cal-body" id="cal-body">
@@ -1946,14 +1973,29 @@ const CAL_HOURS  = CAL_END - CAL_START;
 
 let calWeekStart = weekStart(new Date());
 let _calNowTimer = null;
+let calView = 'week'; // 'week' | 'day'
 
 function weekStart(d) {
   const s = new Date(d); s.setHours(0,0,0,0);
   s.setDate(s.getDate() - s.getDay()); return s;
 }
-function calPrev()    { calWeekStart.setDate(calWeekStart.getDate()-7); renderCalendar(); }
-function calNext()    { calWeekStart.setDate(calWeekStart.getDate()+7); renderCalendar(); }
+function calPrev() {
+  const delta = calView === 'day' ? 1 : 7;
+  calWeekStart.setDate(calWeekStart.getDate() - delta);
+  renderCalendar();
+}
+function calNext() {
+  const delta = calView === 'day' ? 1 : 7;
+  calWeekStart.setDate(calWeekStart.getDate() + delta);
+  renderCalendar();
+}
 function calGoToday() { calWeekStart = weekStart(new Date()); renderCalendar(); }
+function calSetView(v) {
+  calView = v;
+  document.getElementById('cal-btn-week').classList.toggle('active', v==='week');
+  document.getElementById('cal-btn-day').classList.toggle('active', v==='day');
+  renderCalendar();
+}
 
 function calTimeToY(hhmm) {
   if (!hhmm) return null;
@@ -1969,30 +2011,49 @@ function calFmtDisplay(hhmm) {
 }
 
 function renderCalendar() {
-  const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS    = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const DAYSLONG= ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const todayStr = today();
-  const end = new Date(calWeekStart); end.setDate(end.getDate()+6);
+  const isDayView = calView === 'day';
+  const numCols = isDayView ? 1 : 7;
+
+  // Set CSS variable for column count
+  document.getElementById('cal-time-grid') && document.querySelector('.cal-pane') &&
+    document.querySelector('.cal-pane').style.setProperty('--cal-cols', numCols);
+  document.querySelector('.cal-hdr-days') && (document.querySelector('.cal-hdr-days').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
+  document.querySelector('.cal-allday-cells') && (document.querySelector('.cal-allday-cells').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
+  document.querySelector('.cal-columns') && (document.querySelector('.cal-columns').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
 
   // ── Toolbar title ──────────────────────────────
-  const sm = calWeekStart.getMonth()===end.getMonth();
-  document.getElementById('cal-week-title').textContent = sm
-    ? `${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getFullYear()}`
-    : `${MONTHS[calWeekStart.getMonth()].slice(0,3)} – ${MONTHS[end.getMonth()].slice(0,3)} ${end.getFullYear()}`;
+  const end = new Date(calWeekStart); end.setDate(end.getDate() + (isDayView ? 0 : 6));
+  if (isDayView) {
+    document.getElementById('cal-week-title').textContent =
+      `${DAYSLONG[calWeekStart.getDay()]}, ${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getDate()}`;
+  } else {
+    const sm = calWeekStart.getMonth() === end.getMonth();
+    document.getElementById('cal-week-title').textContent = sm
+      ? `${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getFullYear()}`
+      : `${MONTHS[calWeekStart.getMonth()].slice(0,3)} – ${MONTHS[end.getMonth()].slice(0,3)} ${end.getFullYear()}`;
+  }
+  // Subtitle: "Today is Wednesday, Sep 13"
+  const tn = new Date();
+  const todayEl = document.getElementById('cal-header-today');
+  if (todayEl) todayEl.textContent = `Today is ${DAYSLONG[tn.getDay()]}, ${MONTHS[tn.getMonth()].slice(0,3)} ${tn.getDate()}`;
 
   // ── Day header row ─────────────────────────────
   let hdrHtml = '', alldayCells = '';
-  for (let i=0; i<7; i++) {
-    const d = new Date(calWeekStart); d.setDate(d.getDate()+i);
-    const ds = fmtDate(d), isToday = ds===todayStr;
-    hdrHtml += `<div class="cal-hdr-day${isToday?' is-today':''}">
-      <div class="cal-hdr-dayname">${DAYS[d.getDay()]}</div>
+  for (let i = 0; i < numCols; i++) {
+    const d = new Date(calWeekStart); d.setDate(d.getDate() + i);
+    const ds = fmtDate(d), isToday = ds === todayStr;
+    hdrHtml += `<div class="cal-hdr-day${isToday?' is-today':''}" onclick="calJumpToDay(${i})">
+      <div class="cal-hdr-dayname">${isDayView ? DAYSLONG[d.getDay()].toUpperCase() : DAYS[d.getDay()]}</div>
       <div class="cal-hdr-daynum">${d.getDate()}</div>
     </div>`;
     const allDayEvts = (S.schedule[ds]||[]).filter(e=>!e.time);
     alldayCells += `<div class="cal-allday-cell">${allDayEvts.map(e=>`<div class="cal-allday-evt" title="${esc(e.title)}">${esc(e.title)}</div>`).join('')}</div>`;
   }
-  document.getElementById('cal-hdr-days').innerHTML   = hdrHtml;
+  document.getElementById('cal-hdr-days').innerHTML     = hdrHtml;
   document.getElementById('cal-allday-cells').innerHTML = alldayCells;
 
   // Hide all-day row if nothing there
@@ -2002,66 +2063,65 @@ function renderCalendar() {
   // ── Time grid ──────────────────────────────────
   const totalH = CAL_HOURS * CAL_HOUR_H;
 
-  // Gutter with hour labels
   let gutterHtml = '';
-  for (let h=CAL_START; h<=CAL_END; h++) {
-    const y = (h-CAL_START)*CAL_HOUR_H;
-    if (h < CAL_END) {
-      const label = h===12?'12 PM': h>12?`${h-12} PM`: h===0?'12 AM':`${h} AM`;
-      gutterHtml += `<div class="cal-hour-label" style="top:${y}px">${label}</div>`;
-    }
+  for (let h = CAL_START; h < CAL_END; h++) {
+    const y = (h - CAL_START) * CAL_HOUR_H;
+    const label = h === 12 ? '12 PM' : h > 12 ? `${h-12} PM` : h === 0 ? '12 AM' : `${h} AM`;
+    gutterHtml += `<div class="cal-hour-label" style="top:${y}px">${label}</div>`;
   }
 
-  // Columns (one per day)
   let colsHtml = '';
-  for (let i=0; i<7; i++) {
-    const d = new Date(calWeekStart); d.setDate(d.getDate()+i);
+  for (let i = 0; i < numCols; i++) {
+    const d = new Date(calWeekStart); d.setDate(d.getDate() + i);
     const ds = fmtDate(d);
-    const isToday = ds===todayStr;
+    const isToday = ds === todayStr;
 
-    // Hour lines
     let linesHtml = '';
-    for (let h=0; h<CAL_HOURS; h++) {
-      const y = h*CAL_HOUR_H;
+    for (let h = 0; h < CAL_HOURS; h++) {
+      const y = h * CAL_HOUR_H;
       linesHtml += `<div class="cal-hour-line" style="top:${y}px"></div>`;
-      linesHtml += `<div class="cal-hour-line half" style="top:${y+CAL_HOUR_H/2}px"></div>`;
+      linesHtml += `<div class="cal-hour-line half" style="top:${y + CAL_HOUR_H/2}px"></div>`;
     }
 
-    // Events
     const timed = (S.schedule[ds]||[]).filter(e=>e.time).sort((a,b)=>a.time.localeCompare(b.time));
     let evtsHtml = '';
     timed.forEach(e => {
       const y = calTimeToY(e.time);
       if (y === null || y < 0 || y > totalH) return;
-      const blockH = Math.max(CAL_HOUR_H*0.75, 24); // default 45min height
+      const blockH = Math.max(CAL_HOUR_H * 0.75, 24);
       const cls = e.source==='google' ? 'gcal' : 'local';
-      const timeLabel = calFmtDisplay(e.time);
       evtsHtml += `<div class="cal-block ${cls}" style="top:${y}px;height:${blockH}px" title="${esc(e.title)}">
-        <span class="cal-block-time">${esc(timeLabel)}</span>
+        <span class="cal-block-time">${esc(calFmtDisplay(e.time))}</span>
         <span class="cal-block-title">${esc(e.title)}</span>
       </div>`;
     });
 
-    // "Now" indicator for today
     const nowHtml = isToday ? `<div class="cal-now-line" id="cal-now-line"><div class="cal-now-dot"></div><div class="cal-now-bar"></div></div>` : '';
-
-    colsHtml += `<div class="cal-col">${linesHtml}${evtsHtml}${nowHtml}</div>`;
+    colsHtml += `<div class="cal-col${isToday?' is-today':''}">${linesHtml}${evtsHtml}${nowHtml}</div>`;
   }
 
   document.getElementById('cal-time-grid').innerHTML = `
     <div class="cal-gutter" style="height:${totalH}px">${gutterHtml}</div>
-    <div class="cal-columns" style="height:${totalH}px">${colsHtml}</div>`;
+    <div class="cal-columns" style="height:${totalH}px;grid-template-columns:repeat(${numCols},1fr)">${colsHtml}</div>`;
 
-  // Position now-line and scroll to it
   _positionNowLine();
   if (_calNowTimer) clearInterval(_calNowTimer);
   _calNowTimer = setInterval(_positionNowLine, 60000);
 
-  // Scroll to working hours (scroll to 8 AM minus a bit)
   requestAnimationFrame(() => {
     const body = document.getElementById('cal-body');
     if (body) body.scrollTop = (8 - CAL_START) * CAL_HOUR_H - 20;
   });
+}
+
+function calJumpToDay(colIndex) {
+  if (calView === 'week') {
+    const d = new Date(calWeekStart);
+    d.setDate(d.getDate() + colIndex);
+    calWeekStart = new Date(d);
+    calWeekStart.setHours(0,0,0,0);
+    calSetView('day');
+  }
 }
 
 function _positionNowLine() {

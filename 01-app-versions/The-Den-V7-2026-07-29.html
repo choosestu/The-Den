@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>The Den</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 <style>
 :root {
@@ -566,9 +565,6 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
       <button class="tab-btn" id="tab-calendar" onclick="switchTab('calendar')">Calendar</button>
     </nav>
     <div class="header-controls">
-      <span class="gpill" id="gpill"><span class="dot"></span><span id="gpill-label">Google</span></span>
-      <button class="icon-btn" onclick="connectGoogle()" id="g-connect-btn">Connect</button>
-      <button class="icon-btn" onclick="syncAllGoogle()">Sync</button>
       <button class="icon-btn eve" onclick="showEveningMode()">Evening Plan</button>
       <button class="icon-btn" onclick="openSettings()">Settings</button>
     </div>
@@ -658,33 +654,16 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
 
     <!-- CALENDAR -->
     <div class="pane" id="pane-calendar">
-      <div class="cal-pane">
-        <div class="cal-toolbar">
-          <div class="cal-toolbar-left">
-            <button class="cal-nav-btn" onclick="calPrev()">&#8249;</button>
-            <button class="cal-nav-btn" onclick="calNext()">&#8250;</button>
-            <span class="cal-toolbar-title" id="cal-week-title"></span>
-            <span class="cal-header-today" id="cal-header-today"></span>
-            <button class="cal-today-btn" onclick="calGoToday()">Today</button>
-          </div>
-          <div class="cal-toolbar-right">
-            <div class="cal-view-toggle">
-              <button class="cal-view-btn active" id="cal-btn-week" onclick="calSetView('week')">Week</button>
-              <button class="cal-view-btn" id="cal-btn-day" onclick="calSetView('day')">Day</button>
-            </div>
-            <button class="cal-sync-btn" onclick="syncAllGoogle()">&#8635;</button>
-          </div>
+      <div style="display:flex;flex-direction:column;height:100%;background:var(--bg)">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <span style="font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase">Google Calendar</span>
+          <a href="https://calendar.google.com" target="_blank" style="margin-left:auto;font-size:12px;color:var(--blue);text-decoration:none;opacity:0.8">Open in Google Calendar ↗</a>
         </div>
-        <div class="cal-hdr-row">
-          <div class="cal-hdr-gutter"></div>
-          <div class="cal-hdr-days" id="cal-hdr-days"></div>
-        </div>
-        <div class="cal-allday-row" id="cal-allday-row">
-          <div class="cal-allday-label">all‑day</div>
-          <div class="cal-allday-cells" id="cal-allday-cells"></div>
-        </div>
-        <div class="cal-body" id="cal-body">
-          <div class="cal-time-grid" id="cal-time-grid"></div>
+        <iframe id="cal-iframe" src="" frameborder="0" style="flex:1;border:none;width:100%;min-height:0;display:none" allow="cross-origin-isolated"></iframe>
+        <div id="cal-no-email" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);padding:40px 20px;text-align:center">
+          <div style="font-size:24px">📅</div>
+          <div style="font-size:14px;max-width:340px;line-height:1.6">Add your Google Calendar email in Settings to view your calendar here.<br><span style="font-size:12px;color:var(--dim)">You need to be signed in to Google in this browser.</span></div>
+          <button onclick="openSettings()" style="padding:8px 20px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500">Open Settings</button>
         </div>
       </div>
     </div>
@@ -715,8 +694,8 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
     <h2>SETTINGS</h2>
     <label>Anthropic API Key</label>
     <input id="set-api-key" type="password" placeholder="sk-ant-...">
-    <label>Google Client ID</label>
-    <input id="set-google-id" placeholder="...apps.googleusercontent.com">
+    <label>Google Calendar Email</label>
+    <input id="set-cal-email" placeholder="your@gmail.com" type="email">
     <label>Display Name</label>
     <input id="set-name">
     <label>Lofty API Key (optional)</label>
@@ -726,8 +705,7 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
       <button class="primary" onclick="saveSettings()">Save</button>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
-      <button onclick="disconnectGoogle();closeSettings();" style="padding:9px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:var(--font)">Disconnect Google account</button>
-      <button onclick="exportData()" style="padding:9px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:var(--font)">Export data (JSON)</button>
+<button onclick="exportData()" style="padding:9px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:var(--font)">Export data (JSON)</button>
       <button onclick="document.getElementById('import-file').click()" style="padding:9px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:var(--font)">Import data</button>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
       <button onclick="wipeEverything()" style="padding:9px;background:rgba(255,87,34,0.1);color:var(--urgent);border:1px solid var(--urgent);border-radius:6px;cursor:pointer;font-weight:700;font-family:var(--font)">WIPE ALL DATA</button>
@@ -956,10 +934,9 @@ let S = {
   flintHistory: [],
   catMeta: null,
   dayBlocks: {},
-  googleToken: null, googleTokenExpiry: 0, googleAutoConnect: false,
   settings: {
     apiKey: '',
-    googleClientId: '791975476945-547af7j0pbn6h28eq73qcn5rbvrdi1mm.apps.googleusercontent.com',
+    calEmail: '',
     name: 'Stu', loftyKey: ''
   }
 };
@@ -971,8 +948,6 @@ let pendingExtraction = null;
 let focusTimerInterval = null;
 let focusSecondsLeft = 0;
 let gymMorning = false;
-let tokenClient = null;
-let _silentRefresh = false;
 
 // ════════════════════════════════════════════════
 // PERSISTENCE
@@ -1132,7 +1107,6 @@ function pendingAdd(idx) {
   const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
   S.tasks.push(task);
   save();
-  gtaskCreate(task);
   pt._done = true;
   renderPendingReview();
 }
@@ -1148,7 +1122,6 @@ function pendingAcceptAll() {
     const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
     S.tasks.push(task);
     save();
-    gtaskCreate(task);
     pt._done = true;
   });
   finishPendingReview();
@@ -1211,7 +1184,6 @@ function addPendingFromEdit() {
   };
   S.tasks.push(task);
   save();
-  gtaskCreate(task);
   pt._done = true;
   closePendingEdit();
   renderPendingReview();
@@ -1377,7 +1349,7 @@ function focusDone() {
   const task = tasks[S.morning.focusIndex];
   if (task?.id) {
     const t = S.tasks.find(x => x.id === task.id);
-    if (t) { t.status = 'done'; t.completedAt = Date.now(); save(); gtaskComplete(t); }
+    if (t) { t.status = 'done'; t.completedAt = Date.now(); save(); }
   }
   S.morning.focusIndex++;
   save();
@@ -1449,7 +1421,6 @@ function showMainApp() {
   hideLayer('evening-mode');
   showLayer('main-app');
   renderToday();
-  updateGoogleUI();
 }
 
 function switchTab(name) {
@@ -1536,29 +1507,7 @@ function saveEveningPlan() {
 
 async function loadTomorrowCalEvents() {
   const container = document.getElementById('eve-cal-section');
-  if (!isGConnected()) {
-    container.innerHTML = '<div class="empty">Connect Google to see tomorrow\'s events.</div>';
-    return;
-  }
-  const tom = tomorrow();
-  const start = new Date(tom+'T00:00:00');
-  const end   = new Date(tom+'T23:59:59');
-  try {
-    const r = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${start.toISOString()}&timeMax=${end.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=20`,
-      { headers: { Authorization: `Bearer ${S.googleToken}` } }
-    );
-    const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    const items = d.items || [];
-    if (!items.length) { container.innerHTML = '<div class="empty">Nothing on the calendar tomorrow.</div>'; return; }
-    container.innerHTML = items.map(e => {
-      const time = e.start?.dateTime ? fmtTimeISO(e.start.dateTime) : 'All day';
-      return `<div class="eve-cal-item"><span class="eve-cal-time">${esc(time)}</span>${esc(e.summary||'Event')}</div>`;
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<div class="empty">Could not load calendar.</div>';
-  }
+  container.innerHTML = '<div class="empty" style="text-align:left;padding:4px 0;font-size:12px">Check the <a onclick="hideEveningMode();switchTab(\'calendar\')" style="color:var(--blue);cursor:pointer">Calendar tab</a> to see tomorrow\'s events.</div>';
 }
 
 // ════════════════════════════════════════════════
@@ -1993,7 +1942,6 @@ function clearSelection() { selectedTasks.clear(); renderTasks(); }
 function deleteSelected() {
   if (!selectedTasks.size) return;
   if (!confirm(`Delete ${selectedTasks.size} task${selectedTasks.size===1?'':'s'}?`)) return;
-  S.tasks.filter(t => selectedTasks.has(t.id)).forEach(t => gtaskDelete(t));
   S.tasks = S.tasks.filter(t => !selectedTasks.has(t.id));
   selectedTasks.clear();
   save(); renderTasks();
@@ -2026,7 +1974,6 @@ function saveTaskEdit() {
   if (t.status==='done' && !t.completedAt) t.completedAt = Date.now();
   save(); closeTaskEdit(); renderTasks();
   if (currentTab==='today') renderToday();
-  gtaskUpdate(t, oldCategory);
 }
 
 function setCat(c) { taskFilter.cat=c; renderTasks(); }
@@ -2041,15 +1988,12 @@ function toggleDone(id) {
   t.status = t.status==='done'?'active':'done';
   t.completedAt = t.status==='done'?Date.now():null;
   save(); renderTasks(); if (currentTab==='today') renderToday();
-  gtaskComplete(t);
 }
 function toggleUrgent(id) {
   const t = S.tasks.find(x => x.id===id); if (!t) return;
   t.urgent=!t.urgent; save(); renderTasks();
 }
 function deleteTask(id) {
-  const t = S.tasks.find(x => x.id===id);
-  if (t) gtaskDelete(t);
   S.tasks=S.tasks.filter(x => x.id!==id); save(); renderTasks();
 }
 function addTaskFromInput() {
@@ -2060,7 +2004,6 @@ function addTaskFromInput() {
   const t = { id:uid(), text, category:cat, urgent, status:'active', createdAt:Date.now() };
   S.tasks.push(t);
   save();
-  gtaskCreate(t);
   document.getElementById('add-task-text').value='';
   document.getElementById('add-task-urgent').checked=false;
   renderTasks();
@@ -2068,447 +2011,40 @@ function addTaskFromInput() {
 function addTaskDirect(text, category, urgent) {
   const t = { id:uid(), text, category:category||'Life Systems and Admin', urgent:!!urgent, status:'active', createdAt:Date.now(), seenAt:null, source:'extracted' };
   S.tasks.push(t);
-  gtaskCreate(t);
   return t;
 }
 
 
 // ════════════════════════════════════════════════
-// CALENDAR (WEEK VIEW — Google Calendar style)
+// CALENDAR (Google Calendar iframe embed)
 // ════════════════════════════════════════════════
-const CAL_HOUR_H = 48;   // px per hour
-const CAL_START  = 6;    // first hour shown (6 AM)
-const CAL_END    = 22;   // last hour shown  (10 PM)
-const CAL_HOURS  = CAL_END - CAL_START;
-
-let calWeekStart = weekStart(new Date());
-let _calNowTimer = null;
-let calView = 'week'; // 'week' | 'day'
-
-function weekStart(d) {
-  const s = new Date(d); s.setHours(0,0,0,0);
-  s.setDate(s.getDate() - s.getDay()); return s;
-}
-function calPrev() {
-  const delta = calView === 'day' ? 1 : 7;
-  calWeekStart.setDate(calWeekStart.getDate() - delta);
-  renderCalendar();
-}
-function calNext() {
-  const delta = calView === 'day' ? 1 : 7;
-  calWeekStart.setDate(calWeekStart.getDate() + delta);
-  renderCalendar();
-}
-function calGoToday() { calWeekStart = weekStart(new Date()); renderCalendar(); }
-function calSetView(v) {
-  calView = v;
-  document.getElementById('cal-btn-week').classList.toggle('active', v==='week');
-  document.getElementById('cal-btn-day').classList.toggle('active', v==='day');
-  renderCalendar();
-}
-
-function calTimeToY(hhmm) {
-  if (!hhmm) return null;
-  const [h, m] = hhmm.split(':').map(Number);
-  return (h - CAL_START + m/60) * CAL_HOUR_H;
-}
-function calFmtDisplay(hhmm) {
-  if (!hhmm) return '';
-  const [h, m] = hhmm.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12  = h % 12 || 12;
-  return m ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : `${h12} ${ampm}`;
-}
 
 function renderCalendar() {
-  const DAYS    = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const DAYSLONG= ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const todayStr = today();
-  const isDayView = calView === 'day';
-  const numCols = isDayView ? 1 : 7;
-
-  // Set CSS variable for column count
-  document.getElementById('cal-time-grid') && document.querySelector('.cal-pane') &&
-    document.querySelector('.cal-pane').style.setProperty('--cal-cols', numCols);
-  document.querySelector('.cal-hdr-days') && (document.querySelector('.cal-hdr-days').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
-  document.querySelector('.cal-allday-cells') && (document.querySelector('.cal-allday-cells').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
-  document.querySelector('.cal-columns') && (document.querySelector('.cal-columns').style.gridTemplateColumns = `repeat(${numCols}, 1fr)`);
-
-  // ── Toolbar title ──────────────────────────────
-  const end = new Date(calWeekStart); end.setDate(end.getDate() + (isDayView ? 0 : 6));
-  if (isDayView) {
-    document.getElementById('cal-week-title').textContent =
-      `${DAYSLONG[calWeekStart.getDay()]}, ${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getDate()}`;
-  } else {
-    const sm = calWeekStart.getMonth() === end.getMonth();
-    document.getElementById('cal-week-title').textContent = sm
-      ? `${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getFullYear()}`
-      : `${MONTHS[calWeekStart.getMonth()].slice(0,3)} – ${MONTHS[end.getMonth()].slice(0,3)} ${end.getFullYear()}`;
+  const email = (S.settings.calEmail || '').trim();
+  const iframe = document.getElementById('cal-iframe');
+  const noEmail = document.getElementById('cal-no-email');
+  if (!email) {
+    if (iframe) iframe.style.display = 'none';
+    if (noEmail) noEmail.style.display = '';
+    return;
   }
-  // Subtitle: "Today is Wednesday, Sep 13"
-  const tn = new Date();
-  const todayEl = document.getElementById('cal-header-today');
-  if (todayEl) todayEl.textContent = `Today is ${DAYSLONG[tn.getDay()]}, ${MONTHS[tn.getMonth()].slice(0,3)} ${tn.getDate()}`;
-
-  // ── Day header row ─────────────────────────────
-  let hdrHtml = '', alldayCells = '';
-  for (let i = 0; i < numCols; i++) {
-    const d = new Date(calWeekStart); d.setDate(d.getDate() + i);
-    const ds = fmtDate(d), isToday = ds === todayStr;
-    hdrHtml += `<div class="cal-hdr-day${isToday?' is-today':''}" onclick="calJumpToDay(${i})">
-      <div class="cal-hdr-dayname">${isDayView ? DAYSLONG[d.getDay()].toUpperCase() : DAYS[d.getDay()]}</div>
-      <div class="cal-hdr-daynum">${d.getDate()}</div>
-    </div>`;
-    const allDayEvts = (S.schedule[ds]||[]).filter(e=>!e.time);
-    alldayCells += `<div class="cal-allday-cell">${allDayEvts.map(e=>`<div class="cal-allday-evt" title="${esc(e.title)}">${esc(e.title)}</div>`).join('')}</div>`;
-  }
-  document.getElementById('cal-hdr-days').innerHTML     = hdrHtml;
-  document.getElementById('cal-allday-cells').innerHTML = alldayCells;
-
-  // Hide all-day row if nothing there
-  const hasAllDay = Object.values(S.schedule).some(evts=>evts.some(e=>!e.time));
-  document.getElementById('cal-allday-row').style.display = hasAllDay ? '' : 'none';
-
-  // ── Time grid ──────────────────────────────────
-  const totalH = CAL_HOURS * CAL_HOUR_H;
-
-  let gutterHtml = '';
-  for (let h = CAL_START; h < CAL_END; h++) {
-    const y = (h - CAL_START) * CAL_HOUR_H;
-    const label = h === 12 ? '12 PM' : h > 12 ? `${h-12} PM` : h === 0 ? '12 AM' : `${h} AM`;
-    gutterHtml += `<div class="cal-hour-label" style="top:${y}px">${label}</div>`;
-  }
-
-  let colsHtml = '';
-  for (let i = 0; i < numCols; i++) {
-    const d = new Date(calWeekStart); d.setDate(d.getDate() + i);
-    const ds = fmtDate(d);
-    const isToday = ds === todayStr;
-
-    let linesHtml = '';
-    for (let h = 0; h < CAL_HOURS; h++) {
-      const y = h * CAL_HOUR_H;
-      linesHtml += `<div class="cal-hour-line" style="top:${y}px"></div>`;
-      linesHtml += `<div class="cal-hour-line half" style="top:${y + CAL_HOUR_H/2}px"></div>`;
-    }
-
-    const timed = (S.schedule[ds]||[]).filter(e=>e.time).sort((a,b)=>a.time.localeCompare(b.time));
-    let evtsHtml = '';
-    timed.forEach(e => {
-      const y = calTimeToY(e.time);
-      if (y === null || y < 0 || y > totalH) return;
-      const blockH = Math.max(CAL_HOUR_H * 0.75, 24);
-      const cls = e.source==='google' ? 'gcal' : 'local';
-      evtsHtml += `<div class="cal-block ${cls}" style="top:${y}px;height:${blockH}px" title="${esc(e.title)}">
-        <span class="cal-block-time">${esc(calFmtDisplay(e.time))}</span>
-        <span class="cal-block-title">${esc(e.title)}</span>
-      </div>`;
-    });
-
-    const nowHtml = isToday ? `<div class="cal-now-line" id="cal-now-line"><div class="cal-now-dot"></div><div class="cal-now-bar"></div></div>` : '';
-    colsHtml += `<div class="cal-col${isToday?' is-today':''}">${linesHtml}${evtsHtml}${nowHtml}</div>`;
-  }
-
-  document.getElementById('cal-time-grid').innerHTML = `
-    <div class="cal-gutter" style="height:${totalH}px">${gutterHtml}</div>
-    <div class="cal-columns" style="height:${totalH}px;grid-template-columns:repeat(${numCols},1fr)">${colsHtml}</div>`;
-
-  _positionNowLine();
-  if (_calNowTimer) clearInterval(_calNowTimer);
-  _calNowTimer = setInterval(_positionNowLine, 60000);
-
-  requestAnimationFrame(() => {
-    const body = document.getElementById('cal-body');
-    if (body) body.scrollTop = (8 - CAL_START) * CAL_HOUR_H - 20;
-  });
-}
-
-function calJumpToDay(colIndex) {
-  if (calView === 'week') {
-    const d = new Date(calWeekStart);
-    d.setDate(d.getDate() + colIndex);
-    calWeekStart = new Date(d);
-    calWeekStart.setHours(0,0,0,0);
-    calSetView('day');
+  if (noEmail) noEmail.style.display = 'none';
+  if (iframe) {
+    iframe.style.display = '';
+    const src = 'https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(email) +
+      '&ctz=America%2FToronto&showTitle=0&showNav=1&showDate=1&showPrint=0&showCalendars=1&showTz=0&mode=WEEK';
+    if (iframe.src !== src) iframe.src = src;
   }
 }
 
-function _positionNowLine() {
-  const line = document.getElementById('cal-now-line');
-  if (!line) return;
-  const now = new Date();
-  const y = (now.getHours() - CAL_START + now.getMinutes()/60) * CAL_HOUR_H;
-  line.style.top = Math.max(0, y) + 'px';
-}
-
-// ════════════════════════════════════════════════
-// GOOGLE INTEGRATION
-// ════════════════════════════════════════════════
-function initGoogleAuth() {
-  const cid = S.settings.googleClientId;
-  if (!cid || !window.google) return;
-  try {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: cid,
-      scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks',
-      callback: resp => {
-        const wasSilent = _silentRefresh;
-        _silentRefresh = false;
-        if (resp.error) {
-          if (!wasSilent) toast('Google sign-in failed: ' + resp.error);
-          updateGoogleUI();
-          return;
-        }
-        S.googleToken = resp.access_token;
-        S.googleTokenExpiry = Date.now() + (resp.expires_in * 1000);
-        S.googleAutoConnect = true;
-        save(); updateGoogleUI();
-        syncGoogleCalendar();
-        syncGoogleTasks();
-        if (!wasSilent) toast('Google connected.');
-      }
-    });
-  } catch(e) { console.error('Google auth init failed:', e); }
-}
-function isGConnected() { return !!(S.googleToken && S.googleTokenExpiry > Date.now()); }
-function connectGoogle() {
-  if (!window.google) { toast('Google script loading, try again.'); return; }
-  if (!tokenClient) initGoogleAuth();
-  if (!tokenClient) { toast('Add Google Client ID in Settings.'); return; }
-  _silentRefresh = false;
-  tokenClient.requestAccessToken({ prompt: 'select_account' });
-}
-function silentReconnectGoogle() {
-  if (!S.googleAutoConnect) return;
-  if (!window.google) return;
-  if (!tokenClient) initGoogleAuth();
-  if (!tokenClient) return;
-  _silentRefresh = true;
-  tokenClient.requestAccessToken({ prompt: '' });
-}
-function disconnectGoogle() {
-  if (S.googleToken && window.google) {
-    try { google.accounts.oauth2.revoke(S.googleToken, () => {}); } catch(e) {}
-  }
-  S.googleToken = null;
-  S.googleTokenExpiry = 0;
-  S.googleAutoConnect = false;
-  gtaskListCache = {};
-  save();
-  updateGoogleUI();
-  toast('Google disconnected.');
-}
-function updateGoogleUI() {
-  const pill = document.getElementById('gpill');
-  const btn = document.getElementById('g-connect-btn');
-  if (!pill) return;
-  if (isGConnected()) {
-    pill.classList.add('connected');
-    document.getElementById('gpill-label').textContent = 'Google connected';
-    if (btn) btn.style.display = 'none';
-  } else {
-    pill.classList.remove('connected');
-    document.getElementById('gpill-label').textContent = 'Google';
-    if (btn) btn.style.display = '';
-  }
-}
-async function syncGoogleCalendar() {
-  if (!isGConnected()) return;
-  const headers = { Authorization: `Bearer ${S.googleToken}` };
-  const start = new Date(); start.setHours(0,0,0,0);
-  const end = new Date(); end.setDate(end.getDate()+30); end.setHours(23,59,59,999);
-  try {
-    // Get all calendars this account has access to (includes shared calendars)
-    const listResp = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50', { headers });
-    const listData = await listResp.json();
-    if (listData.error) {
-      if (listData.error.code===401) { S.googleToken=null; save(); updateGoogleUI(); }
-      else toast('Calendar error: ' + listData.error.message);
-      return;
-    }
-    const calendars = (listData.items || []);
-
-    // Fetch events from every calendar
-    const allEvents = [];
-    for (const cal of calendars) {
-      try {
-        const r = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${start.toISOString()}&timeMax=${end.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=100`,
-          { headers }
-        );
-        const d = await r.json();
-        if (d.error) continue;
-        (d.items || []).forEach(e => { e._calId = cal.id; e._calName = cal.summary; });
-        allEvents.push(...(d.items || []));
-      } catch(e) { /* skip inaccessible calendar */ }
-    }
-
-    // Deduplicate by event id across calendars
-    const seen = new Set();
-    const unique = allEvents.filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
-
-    // Clear old google events and repopulate
-    Object.keys(S.schedule).forEach(date => {
-      S.schedule[date] = (S.schedule[date]||[]).filter(e => e.source!=='google');
-      if (!S.schedule[date].length) delete S.schedule[date];
-    });
-    unique.forEach(e => {
-      const startStr = e.start?.dateTime || e.start?.date;
-      if (!startStr) return;
-      const dateOnly = startStr.slice(0,10);
-      const time = e.start?.dateTime ? fmtTimeISO(e.start.dateTime) : '';
-      const label = (e.summary||'Event') + (e.start?.dateTime?'':' (all day)');
-      if (!S.schedule[dateOnly]) S.schedule[dateOnly]=[];
-      S.schedule[dateOnly].push({ id:'gcal-'+e.id, time, title:label, source:'google', calendarName: e._calName });
-    });
-    save();
-    if (currentTab==='today') renderToday();
-    if (currentTab==='calendar') renderCalendar();
-    toast(`Calendar synced — ${unique.length} events from ${calendars.length} calendars.`);
-  } catch(e) { toast('Calendar sync failed.'); console.error(e); }
-}
-
-async function syncGoogleTasks() {
-  if (!isGConnected()) return;
-  try {
-    const listsResp = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists',
-      { headers: { Authorization: `Bearer ${S.googleToken}` } });
-    const listsData = await listsResp.json();
-    if (listsData.error) { console.error('Tasks lists error:', listsData.error); return; }
-
-    let imported = 0;
-    for (const list of (listsData.items || [])) {
-      const cat = CATS.find(c => c.toLowerCase() === list.title.toLowerCase()) ||
-                  CATS.find(c => list.title.toLowerCase().includes(c.toLowerCase()));
-      gtaskListCache[list.title] = list.id;
-      if (cat) gtaskListCache[cat] = list.id;
-      if (!cat) continue;
-
-      let pageToken = '';
-      let allItems = [];
-      do {
-        const url = `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks?showCompleted=false&maxResults=100${pageToken ? '&pageToken=' + pageToken : ''}`;
-        const tasksResp = await fetch(url, { headers: { Authorization: `Bearer ${S.googleToken}` } });
-        const tasksData = await tasksResp.json();
-        if (tasksData.error) break;
-        allItems = allItems.concat(tasksData.items || []);
-        pageToken = tasksData.nextPageToken || '';
-      } while (pageToken);
-
-      for (const rt of allItems) {
-        if (!rt.title || rt.status==='completed') continue;
-        const exists = S.tasks.some(t =>
-          t.text.toLowerCase().trim() === rt.title.toLowerCase().trim() && t.category === cat
-        );
-        if (!exists) {
-          S.tasks.push({ id:uid(), text:rt.title, category:cat, urgent:false, status:'active', createdAt:Date.now(), source:'google-tasks', googleTaskId:rt.id, googleListId:list.id });
-          imported++;
-        }
-      }
-    }
-    if (imported > 0) {
-      save();
-      toast(`Imported ${imported} task${imported===1?'':'s'} from Google Tasks.`);
-      if (currentTab==='tasks') renderTasks();
-      if (currentTab==='today') renderToday();
-    }
-  } catch(e) { console.error('Google Tasks sync error:', e); }
-}
-
-async function syncAllGoogle() {
-  if (!isGConnected()) { connectGoogle(); return; }
-  await syncGoogleCalendar();
-  await syncGoogleTasks();
-}
-
-// ════════════════════════════════════════════════
-// GOOGLE TASKS WRITE-BACK
-// ════════════════════════════════════════════════
-let gtaskListCache = {};
-
-function gtaskH() { return { Authorization: `Bearer ${S.googleToken}`, 'Content-Type': 'application/json' }; }
-
-async function gtaskGetListId(category) {
-  if (gtaskListCache[category]) return gtaskListCache[category];
-  try {
-    const r = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=100', { headers: gtaskH() });
-    const d = await r.json();
-    if (d.error) return null;
-    (d.items || []).forEach(l => { gtaskListCache[l.title] = l.id; });
-    if (gtaskListCache[category]) return gtaskListCache[category];
-    // Create the list if it doesn't exist yet
-    const cr = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists',
-      { method: 'POST', headers: gtaskH(), body: JSON.stringify({ title: category }) });
-    const nl = await cr.json();
-    if (nl.id) { gtaskListCache[category] = nl.id; return nl.id; }
-  } catch(e) { console.error('gtaskGetListId', e); }
-  return null;
-}
-
-async function gtaskCreate(task) {
-  if (!isGConnected()) return;
-  try {
-    const listId = await gtaskGetListId(task.category);
-    if (!listId) return;
-    const r = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks`,
-      { method: 'POST', headers: gtaskH(), body: JSON.stringify({ title: task.text }) });
-    const d = await r.json();
-    if (d.id) { task.googleTaskId = d.id; task.googleListId = listId; save(); }
-  } catch(e) { console.error('gtaskCreate', e); }
-}
-
-async function gtaskComplete(task) {
-  if (!isGConnected() || !task.googleTaskId) return;
-  try {
-    const listId = task.googleListId || await gtaskGetListId(task.category);
-    if (!listId) return;
-    const status = task.status === 'done' ? 'completed' : 'needsAction';
-    await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks/${task.googleTaskId}`,
-      { method: 'PATCH', headers: gtaskH(), body: JSON.stringify({ id: task.googleTaskId, status }) });
-  } catch(e) { console.error('gtaskComplete', e); }
-}
-
-async function gtaskDelete(task) {
-  if (!isGConnected() || !task.googleTaskId) return;
-  try {
-    const listId = task.googleListId || await gtaskGetListId(task.category);
-    if (!listId) return;
-    await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks/${task.googleTaskId}`,
-      { method: 'DELETE', headers: gtaskH() });
-  } catch(e) { console.error('gtaskDelete', e); }
-}
-
-async function gtaskUpdate(task, oldCategory) {
-  if (!isGConnected()) return;
-  if (!task.googleTaskId) { await gtaskCreate(task); return; }
-  try {
-    const oldListId = task.googleListId || await gtaskGetListId(oldCategory || task.category);
-    const newListId = await gtaskGetListId(task.category);
-    if (!oldListId || !newListId) return;
-    if (oldListId !== newListId) {
-      await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${oldListId}/tasks/${task.googleTaskId}`,
-        { method: 'DELETE', headers: gtaskH() });
-      const r = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${newListId}/tasks`,
-        { method: 'POST', headers: gtaskH(),
-          body: JSON.stringify({ title: task.text, status: task.status === 'done' ? 'completed' : 'needsAction' }) });
-      const d = await r.json();
-      if (d.id) { task.googleTaskId = d.id; task.googleListId = newListId; save(); }
-    } else {
-      await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${oldListId}/tasks/${task.googleTaskId}`,
-        { method: 'PATCH', headers: gtaskH(),
-          body: JSON.stringify({ id: task.googleTaskId, title: task.text, status: task.status === 'done' ? 'completed' : 'needsAction' }) });
-      task.googleListId = oldListId; save();
-    }
-  } catch(e) { console.error('gtaskUpdate', e); }
-}
+// Google integration removed — calendar uses iframe embed, no OAuth required.
 
 // ════════════════════════════════════════════════
 // SETTINGS
 // ════════════════════════════════════════════════
 function openSettings() {
   document.getElementById('set-api-key').value = S.settings.apiKey||'';
-  document.getElementById('set-google-id').value = S.settings.googleClientId||'';
+  document.getElementById('set-cal-email').value = S.settings.calEmail||'';
   document.getElementById('set-name').value = S.settings.name||'';
   document.getElementById('set-lofty-key').value = S.settings.loftyKey||'';
   document.getElementById('settings-modal').classList.add('active');
@@ -2516,16 +2052,16 @@ function openSettings() {
 function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
 function saveSettings() {
   S.settings.apiKey = document.getElementById('set-api-key').value.trim();
-  S.settings.googleClientId = document.getElementById('set-google-id').value.trim();
+  S.settings.calEmail = document.getElementById('set-cal-email').value.trim();
   S.settings.name = document.getElementById('set-name').value.trim();
   S.settings.loftyKey = document.getElementById('set-lofty-key').value.trim();
-  save(); closeSettings(); toast('Settings saved.'); initGoogleAuth();
+  save(); closeSettings(); toast('Settings saved.'); renderCalendar();
 }
 function wipeEverything() {
   if (!confirm('Delete all tasks, schedule, and waiting-on items? Settings are preserved.')) return;
   if (!confirm('Are you sure? This cannot be undone.')) return;
-  const { apiKey, googleClientId, name, loftyKey } = S.settings;
-  S = { tasks:[], schedule:{}, waitingOn:[], oneThing:{date:'',text:''}, morning:{medsDate:'',completeDate:'',focusIndex:0}, eveningPlan:null, flintHistory:[], googleToken:null, googleTokenExpiry:0, settings:{apiKey,googleClientId,name,loftyKey} };
+  const { apiKey, calEmail, name, loftyKey } = S.settings;
+  S = { tasks:[], schedule:{}, waitingOn:[], oneThing:{date:'',text:''}, morning:{medsDate:'',completeDate:'',focusIndex:0}, eveningPlan:null, flintHistory:[], settings:{apiKey,calEmail,name,loftyKey} };
   save(); closeSettings(); toast('Wiped. Fresh start.'); showMainApp();
 }
 function exportData() {
@@ -2945,26 +2481,8 @@ function init() {
   syncCatsFromMeta();
   renderFlintHistory();
 
-  // Wait for Google then init
-  let attempts = 20;
-  const waitForGoogle = () => {
-    if (window.google) {
-      initGoogleAuth();
-      updateGoogleUI();
-      if (isGConnected()) { syncGoogleCalendar(); syncGoogleTasks(); }
-      else { silentReconnectGoogle(); }
-    }
-    else if (attempts-- > 0) setTimeout(waitForGoogle, 500);
-  };
-  setTimeout(waitForGoogle, 500);
-  setInterval(() => { if (isGConnected()) syncGoogleCalendar(); }, 15*60*1000);
-  setInterval(() => { if (isGConnected()) syncGoogleTasks(); }, 10*60*1000);
+
   // Proactively refresh token 5 minutes before it expires
-  setInterval(() => {
-    if (S.googleAutoConnect && S.googleTokenExpiry > 0 && S.googleTokenExpiry - Date.now() < 5 * 60 * 1000) {
-      silentReconnectGoogle();
-    }
-  }, 60 * 1000);
 
   checkMedGate();
 }

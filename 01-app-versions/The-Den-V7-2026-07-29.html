@@ -2027,7 +2027,7 @@ function renderCalendar() {
     iframe.style.display = '';
     const src = 'https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(email) +
       '&ctz=America%2FToronto&showTitle=0&showNav=1&showDate=1&showPrint=0&showCalendars=1&showTz=0&mode=WEEK' +
-      '&authuser=' + encodeURIComponent(email);
+      '&authuser=' + email;
     if (iframe.src !== src) iframe.src = src;
   }
 }
@@ -2473,6 +2473,7 @@ function saveCatManager() {
 // ════════════════════════════════════════════════
 function init() {
   load();
+  if (!S.settings.calEmail) S.settings.calEmail = 'mynextascent@gmail.com';
   syncCatsFromMeta();
   renderFlintHistory();
 

@@ -78,10 +78,9 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .pr-accept-all { background: var(--blue); color: #fff; border: none; padding: 8px 20px; border-radius: var(--r); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); }
 .pr-group { margin-bottom: 16px; }
 .pr-group-title { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; padding-left: 4px; }
-.pr-task-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--card); border-radius: var(--r); margin-bottom: 4px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.1s, background 0.1s; }
+.pr-task-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--card); border-radius: var(--r); margin-bottom: 4px; border: 1px solid var(--border); transition: border-color 0.1s, background 0.1s; }
 .pr-task-row:hover { border-color: var(--border-hi); background: var(--card-hi); }
-.pr-task-row-arrow { font-size: 12px; color: var(--muted); flex-shrink: 0; transition: color 0.1s; }
-.pr-task-row:hover .pr-task-row-arrow { color: var(--blue); }
+.pr-btn-edit { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: var(--r); font-size: 12px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
 .tag.priority-p1 { background: rgba(229,77,46,0.12); color: #f16a50; }
 .tag.priority-p2 { background: rgba(245,158,11,0.12); color: #f59e0b; }
 .tag.priority-p3 { background: rgba(94,106,210,0.12); color: #8a9de0; }
@@ -657,7 +656,7 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
       <div style="display:flex;flex-direction:column;height:100%;background:var(--bg)">
         <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
           <span style="font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase">Google Calendar</span>
-          <a href="https://calendar.google.com" target="_blank" style="margin-left:auto;font-size:12px;color:var(--blue);text-decoration:none;opacity:0.8">Open in Google Calendar ↗</a>
+          <a href="https://calendar.google.com/calendar/r?authuser=mynextascent@gmail.com" target="_blank" style="margin-left:auto;font-size:12px;color:var(--blue);text-decoration:none;opacity:0.8">Open in Google Calendar ↗</a>
         </div>
         <iframe id="cal-iframe" src="" frameborder="0" style="flex:1;border:none;width:100%;min-height:0;display:none" allow="cross-origin-isolated"></iframe>
         <div id="cal-no-email" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);padding:40px 20px;text-align:center">
@@ -936,7 +935,7 @@ let S = {
   dayBlocks: {},
   settings: {
     apiKey: '',
-    calEmail: '',
+    calEmail: 'mynextascent@gmail.com',
     name: 'Stu', loftyKey: ''
   }
 };
@@ -1094,9 +1093,11 @@ function renderPendingReview() {
       <div class="pr-group">
         <div class="pr-group-title">${esc(cat)}</div>
         ${list.map(t => `
-          <div class="pr-task-row" id="pr-row-${t._idx}" onclick="openPendingEdit(${t._idx})">
+          <div class="pr-task-row" id="pr-row-${t._idx}">
             <div class="pr-task-text">${esc(t.text)}<span class="pr-source">[${esc(t.source || 'transcript')}]</span></div>
-            <span class="pr-task-row-arrow">›</span>
+            <button class="pr-btn-add" onclick="pendingAdd(${t._idx})">Add</button>
+            <button class="pr-btn-edit" onclick="openPendingEdit(${t._idx})">Edit</button>
+            <button class="pr-btn-dismiss" onclick="pendingDismiss(${t._idx})">Dismiss</button>
           </div>`).join('')}
       </div>`).join('');
 }
@@ -1321,18 +1322,11 @@ function showFocusScreen() {
   document.getElementById('focus-task-cat').textContent = task.subtitle || '';
   document.getElementById('focus-progress').textContent = 'Morning Ritual ' + (idx + 1) + ' of ' + MORNING_RITUALS.length;
 
-  // Ritual 1 auto-starts (user just clicked Start Focus). 2 and 3 wait for Begin.
-  if (idx === 0) {
-    document.getElementById('focus-begin-wrap').style.display = 'none';
-    document.getElementById('focus-actions').style.display = '';
-    startFocusTimer(task.durationMinutes || 5);
-  } else {
-    clearFocusTimer();
-    focusSecondsLeft = (task.durationMinutes || 5) * 60;
-    updateTimerDisplay();
-    document.getElementById('focus-begin-wrap').style.display = '';
-    document.getElementById('focus-actions').style.display = 'none';
-  }
+  clearFocusTimer();
+  focusSecondsLeft = (task.durationMinutes || 5) * 60;
+  updateTimerDisplay();
+  document.getElementById('focus-begin-wrap').style.display = '';
+  document.getElementById('focus-actions').style.display = 'none';
 }
 
 function beginRitual() {
@@ -2032,7 +2026,8 @@ function renderCalendar() {
   if (iframe) {
     iframe.style.display = '';
     const src = 'https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(email) +
-      '&ctz=America%2FToronto&showTitle=0&showNav=1&showDate=1&showPrint=0&showCalendars=1&showTz=0&mode=WEEK';
+      '&ctz=America%2FToronto&showTitle=0&showNav=1&showDate=1&showPrint=0&showCalendars=1&showTz=0&mode=WEEK' +
+      '&authuser=' + encodeURIComponent(email);
     if (iframe.src !== src) iframe.src = src;
   }
 }

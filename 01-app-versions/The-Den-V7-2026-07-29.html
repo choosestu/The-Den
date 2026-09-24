@@ -90,6 +90,16 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .pr-source { font-size: 11px; color: var(--muted); margin-left: 6px; }
 .pr-btn-add { background: var(--blue); color: #fff; border: none; padding: 4px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font); white-space: nowrap; }
 .pr-btn-dismiss { background: none; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: var(--r); font-size: 12px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+.pr-task-row.pr-editing { flex-direction: column; align-items: stretch; border-color: var(--blue); background: var(--surface); padding: 12px; gap: 8px; cursor: default; }
+.pr-edit-textarea { width: 100%; background: var(--card); border: 1px solid var(--border-hi); color: var(--text); padding: 8px 10px; border-radius: var(--r); font-family: var(--font); font-size: 13px; resize: vertical; outline: none; line-height: 1.5; min-height: 52px; }
+.pr-edit-textarea:focus { border-color: var(--blue); }
+.pr-edit-fields { display: flex; gap: 6px; flex-wrap: wrap; }
+.pr-edit-sel { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: var(--r); font-family: var(--font); font-size: 12px; outline: none; flex: 1; min-width: 100px; }
+.pr-edit-sel:focus { border-color: var(--blue); }
+.pr-edit-actions { display: flex; gap: 6px; align-items: center; }
+.pr-btn-accept { background: var(--done); color: #fff; border: none; padding: 5px 14px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+.pr-btn-save-inline { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: var(--r); font-size: 12px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+.pr-btn-cancel { background: none; border: none; color: var(--muted); padding: 5px 8px; border-radius: var(--r); font-size: 12px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
 .no-plan-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 16px; }
 .no-plan-box p { color: var(--muted); margin-bottom: 10px; font-size: 13px; }
 .quick-plan { display: grid; gap: 6px; }
@@ -951,9 +961,50 @@ let gymMorning = false;
 // ════════════════════════════════════════════════
 // PERSISTENCE
 // ════════════════════════════════════════════════
+function buildBoardExport() {
+  const tasks = Array.isArray(S.tasks) ? S.tasks : [];
+  const waitingOn = Array.isArray(S.waitingOn) ? S.waitingOn : [];
+  const byCategoryActive = {};
+  let active = 0, done = 0;
+  tasks.forEach(t => {
+    const st = t && t.status;
+    if (st === 'done') { done++; return; }
+    active++;
+    const cat = (t && t.category) || 'Uncategorized';
+    byCategoryActive[cat] = (byCategoryActive[cat] || 0) + 1;
+  });
+  return {
+    exportedAt: new Date().toISOString(),
+    source: 'den-v7-sync',
+    storeKey: STORE_KEY,
+    tasks,
+    waitingOn,
+    oneThing: S.oneThing || null,
+    catMeta: S.catMeta || null,
+    eveningPlan: S.eveningPlan || null,
+    counts: {
+      tasksTotal: tasks.length,
+      active,
+      done,
+      waitingOn: waitingOn.length,
+      byCategoryActive
+    }
+  };
+}
+function syncBoardToServer() {
+  try {
+    const payload = buildBoardExport();
+    fetch('/den-board.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch (e) {}
+}
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e) {}
   if (S.settings?.apiKey) try { localStorage.setItem(API_KEY_STORE, S.settings.apiKey); } catch(e) {}
+  syncBoardToServer();
 }
 function load() {
   try {
@@ -1075,6 +1126,42 @@ function showPendingReview(tasks) {
   renderPendingReview();
 }
 
+function _prRowNormal(t) {
+  return `<div class="pr-task-row" id="pr-row-${t._idx}">
+    <div class="pr-task-text">${esc(t.text)}<span class="pr-source">[${esc(t.source||'transcript')}]</span></div>
+    <button class="pr-btn-add" onclick="pendingAdd(${t._idx})">Add</button>
+    <button class="pr-btn-edit" onclick="openPendingEdit(${t._idx})">Edit</button>
+    <button class="pr-btn-dismiss" onclick="pendingDismiss(${t._idx})">Dismiss</button>
+  </div>`;
+}
+
+function _prRowEditing(t) {
+  const catsHtml = PENDING_EDIT_CATS.map(c =>
+    `<option value="${esc(c)}"${t.category===c?' selected':''}>${esc(c)}</option>`
+  ).join('');
+  return `<div class="pr-task-row pr-editing" id="pr-row-${t._idx}">
+    <textarea class="pr-edit-textarea" id="pei-text-${t._idx}" rows="2">${esc(t.text)}</textarea>
+    <div class="pr-edit-fields">
+      <select class="pr-edit-sel" id="pei-cat-${t._idx}">${catsHtml}</select>
+      <select class="pr-edit-sel" id="pei-pri-${t._idx}">
+        <option value="">— priority —</option>
+        <option value="P1"${t.priority==='P1'?' selected':''}>P1 · Today</option>
+        <option value="P2"${t.priority==='P2'?' selected':''}>P2 · Week</option>
+        <option value="P3"${t.priority==='P3'?' selected':''}>P3 · Month</option>
+        <option value="P4"${t.priority==='P4'?' selected':''}>P4 · Someday</option>
+      </select>
+      <input type="date" class="pr-edit-sel" id="pei-dl-${t._idx}" value="${esc(t.deadline||'')}">
+    </div>
+    <div class="pr-edit-actions">
+      <button class="pr-btn-accept" onclick="pendingInlineAccept(${t._idx})">✓ Accept</button>
+      <button class="pr-btn-save-inline" onclick="pendingInlineSave(${t._idx})">Save</button>
+      <button class="pr-btn-cancel" onclick="closePendingEdit()">Cancel</button>
+      <span style="flex:1"></span>
+      <button class="pr-btn-dismiss" onclick="pendingInlineDismiss(${t._idx})">Dismiss</button>
+    </div>
+  </div>`;
+}
+
 function renderPendingReview() {
   const active = _pendingTasks.filter(t => !t._done);
   if (active.length === 0) { finishPendingReview(); return; }
@@ -1092,14 +1179,12 @@ function renderPendingReview() {
     Object.entries(groups).map(([cat, list]) => `
       <div class="pr-group">
         <div class="pr-group-title">${esc(cat)}</div>
-        ${list.map(t => `
-          <div class="pr-task-row" id="pr-row-${t._idx}">
-            <div class="pr-task-text">${esc(t.text)}<span class="pr-source">[${esc(t.source || 'transcript')}]</span></div>
-            <button class="pr-btn-add" onclick="pendingAdd(${t._idx})">Add</button>
-            <button class="pr-btn-edit" onclick="openPendingEdit(${t._idx})">Edit</button>
-            <button class="pr-btn-dismiss" onclick="pendingDismiss(${t._idx})">Dismiss</button>
-          </div>`).join('')}
+        ${list.map(t => t._idx === _editingPendingIdx ? _prRowEditing(t) : _prRowNormal(t)).join('')}
       </div>`).join('');
+
+  if (_editingPendingIdx !== null) {
+    setTimeout(() => document.getElementById('pei-text-' + _editingPendingIdx)?.focus(), 30);
+  }
 }
 
 function pendingAdd(idx) {
@@ -1134,66 +1219,53 @@ async function finishPendingReview() {
   showMorningBriefing();
 }
 
-// ── PENDING EDIT MODAL ──
+// ── PENDING INLINE EDIT ──
 function openPendingEdit(idx) {
-  const pt = _pendingTasks.find(t => t._idx === idx);
-  if (!pt || pt._done) return;
-  _editingPendingIdx = idx;
-  document.getElementById('pe-text').value = pt.text || '';
-  document.getElementById('pe-source').textContent = pt.source || 'transcript';
-  const catSel = document.getElementById('pe-cat');
-  catSel.innerHTML = PENDING_EDIT_CATS.map(c =>
-    `<option value="${c}"${pt.category === c ? ' selected' : ''}>${c}</option>`
-  ).join('');
-  document.getElementById('pe-priority').value = pt.priority || '';
-  document.getElementById('pe-deadline').value = pt.deadline || '';
-  document.getElementById('pending-edit-modal').classList.add('active');
-  setTimeout(() => document.getElementById('pe-text').focus(), 80);
+  _editingPendingIdx = (_editingPendingIdx === idx) ? null : idx;
+  renderPendingReview();
 }
 
 function closePendingEdit() {
-  document.getElementById('pending-edit-modal').classList.remove('active');
   _editingPendingIdx = null;
+  renderPendingReview();
 }
 
-function _applyPendingEdits(pt) {
-  pt.text     = document.getElementById('pe-text').value.trim() || pt.text;
-  pt.category = document.getElementById('pe-cat').value;
-  pt.priority = document.getElementById('pe-priority').value;
-  pt.deadline = document.getElementById('pe-deadline').value;
+function _readInlineEdits(idx) {
+  const pt = _pendingTasks.find(t => t._idx === idx);
+  if (!pt) return null;
+  const text = document.getElementById('pei-text-' + idx)?.value.trim();
+  if (text) pt.text = text;
+  const cat = document.getElementById('pei-cat-' + idx)?.value;
+  if (cat) pt.category = cat;
+  pt.priority = document.getElementById('pei-pri-' + idx)?.value || '';
+  pt.deadline = document.getElementById('pei-dl-' + idx)?.value || '';
+  return pt;
 }
 
-function savePendingChanges() {
-  const pt = _pendingTasks.find(t => t._idx === _editingPendingIdx);
+function pendingInlineAccept(idx) {
+  const pt = _readInlineEdits(idx);
   if (!pt) return;
-  _applyPendingEdits(pt);
-  closePendingEdit();
+  const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
+  if (pt.priority) task.priority = pt.priority;
+  if (pt.deadline) task.deadline = pt.deadline;
+  S.tasks.push(task);
+  save();
+  pt._done = true;
+  _editingPendingIdx = null;
+  renderPendingReview();
+}
+
+function pendingInlineSave(idx) {
+  _readInlineEdits(idx);
+  _editingPendingIdx = null;
   renderPendingReview();
   toast('Changes saved.');
 }
 
-function addPendingFromEdit() {
-  const pt = _pendingTasks.find(t => t._idx === _editingPendingIdx);
-  if (!pt) return;
-  _applyPendingEdits(pt);
-  const task = {
-    id: uid(), text: pt.text, category: pt.category,
-    urgent: false, status: 'active', createdAt: Date.now(),
-    source: 'pending-review',
-    priority: pt.priority || '',
-    deadline: pt.deadline || ''
-  };
-  S.tasks.push(task);
-  save();
-  pt._done = true;
-  closePendingEdit();
-  renderPendingReview();
-}
-
-function dismissFromPendingEdit() {
-  const pt = _pendingTasks.find(t => t._idx === _editingPendingIdx);
+function pendingInlineDismiss(idx) {
+  const pt = _pendingTasks.find(t => t._idx === idx);
   if (pt) pt._done = true;
-  closePendingEdit();
+  _editingPendingIdx = null;
   renderPendingReview();
 }
 
@@ -2476,7 +2548,7 @@ function init() {
   if (!S.settings.calEmail) S.settings.calEmail = 'mynextascent@gmail.com';
   syncCatsFromMeta();
   renderFlintHistory();
-
+  syncBoardToServer();
 
   // Proactively refresh token 5 minutes before it expires
 

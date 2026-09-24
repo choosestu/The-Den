@@ -790,33 +790,7 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
   </div>
 </div>
 
-<!-- ═══ PENDING EDIT MODAL ═══ -->
-<div class="modal" id="pending-edit-modal" onclick="if(event.target===this)closePendingEdit()">
-  <div class="modal-card" style="max-width:520px">
-    <h2>REVIEW TASK</h2>
-    <label>Task</label>
-    <textarea id="pe-text" rows="3" style="resize:vertical"></textarea>
-    <label>Category</label>
-    <select id="pe-cat"></select>
-    <label>Source</label>
-    <div id="pe-source" style="font-size:12px;color:var(--muted);padding:6px 0 2px;letter-spacing:0;text-transform:none;font-weight:400"></div>
-    <label>Priority</label>
-    <select id="pe-priority">
-      <option value="">— No priority —</option>
-      <option value="P1">P1 · Must do today</option>
-      <option value="P2">P2 · This week</option>
-      <option value="P3">P3 · This month</option>
-      <option value="P4">P4 · Someday</option>
-    </select>
-    <label>Deadline <span style="color:var(--dim);font-size:10px;letter-spacing:0;text-transform:none;font-weight:400">(optional)</span></label>
-    <input type="date" id="pe-deadline">
-    <div class="modal-actions" style="gap:6px;margin-top:20px">
-      <button class="secondary" onclick="savePendingChanges()" style="flex:1.2">Save Changes</button>
-      <button class="primary" onclick="addPendingFromEdit()" style="flex:1.4">Add to List</button>
-      <button onclick="dismissFromPendingEdit()" style="flex:0.9;background:rgba(229,77,46,0.1);color:var(--urgent);border:1px solid rgba(229,77,46,0.25)">Dismiss</button>
-    </div>
-  </div>
-</div>
+<!-- pending-edit-modal removed: inline Edit row is SoR (handlers savePendingChanges/addPendingFromEdit gone) -->
 
 <!-- ═══ TASK EDIT MODAL ═══ -->
 <div class="modal" id="task-edit-modal">
@@ -1117,6 +1091,19 @@ async function clearPendingFile() {
   } catch(e) {}
 }
 
+async function savePendingFile() {
+  try {
+    const remaining = _pendingTasks
+      .filter(t => !t._done)
+      .map(({ _idx, _done, ...rest }) => rest);
+    await fetch('/pending-tasks.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(remaining)
+    });
+  } catch(e) {}
+}
+
 function showPendingReview(tasks) {
   _pendingTasks = tasks.map((t, i) => ({ ...t, _idx: i, _done: false }));
   showLayer('morning-mode');
@@ -1191,21 +1178,27 @@ function pendingAdd(idx) {
   const pt = _pendingTasks.find(t => t._idx === idx);
   if (!pt) return;
   const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
+  if (pt.priority) task.priority = pt.priority;
+  if (pt.deadline) task.deadline = pt.deadline;
   S.tasks.push(task);
   save();
   pt._done = true;
+  savePendingFile();
   renderPendingReview();
 }
 
 function pendingDismiss(idx) {
   const pt = _pendingTasks.find(t => t._idx === idx);
   if (pt) pt._done = true;
+  savePendingFile();
   renderPendingReview();
 }
 
 function pendingAcceptAll() {
   _pendingTasks.filter(t => !t._done).forEach(pt => {
     const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
+    if (pt.priority) task.priority = pt.priority;
+    if (pt.deadline) task.deadline = pt.deadline;
     S.tasks.push(task);
     save();
     pt._done = true;
@@ -1242,7 +1235,7 @@ function _readInlineEdits(idx) {
   return pt;
 }
 
-function pendingInlineAccept(idx) {
+async function pendingInlineAccept(idx) {
   const pt = _readInlineEdits(idx);
   if (!pt) return;
   const task = { id: uid(), text: pt.text, category: pt.category, urgent: false, status: 'active', createdAt: Date.now(), source: 'pending-review' };
@@ -1252,20 +1245,23 @@ function pendingInlineAccept(idx) {
   save();
   pt._done = true;
   _editingPendingIdx = null;
+  await savePendingFile();
   renderPendingReview();
 }
 
-function pendingInlineSave(idx) {
+async function pendingInlineSave(idx) {
   _readInlineEdits(idx);
   _editingPendingIdx = null;
+  await savePendingFile();
   renderPendingReview();
   toast('Changes saved.');
 }
 
-function pendingInlineDismiss(idx) {
+async function pendingInlineDismiss(idx) {
   const pt = _pendingTasks.find(t => t._idx === idx);
   if (pt) pt._done = true;
   _editingPendingIdx = null;
+  await savePendingFile();
   renderPendingReview();
 }
 

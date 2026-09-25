@@ -76,6 +76,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .pr-title { font-size: 16px; font-weight: 600; letter-spacing: 2px; color: var(--text); text-transform: uppercase; }
 .pr-subtitle { font-size: 12px; color: var(--muted); margin-top: 4px; margin-bottom: 16px; }
 .pr-accept-all { background: var(--blue); color: #fff; border: none; padding: 8px 20px; border-radius: var(--r); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); }
+.pr-dismiss-ai { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font); margin-left: 8px; }
+.pr-dismiss-ai:hover { color: var(--urgent); border-color: var(--urgent); }
 .pr-group { margin-bottom: 16px; }
 .pr-group-title { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; padding-left: 4px; }
 .pr-task-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--card); border-radius: var(--r); margin-bottom: 4px; border: 1px solid var(--border); transition: border-color 0.1s, background 0.1s; }
@@ -489,6 +491,7 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
       <div class="pr-title">PENDING REVIEW</div>
       <div class="pr-subtitle" id="pr-subtitle">Tasks from last night's extraction</div>
       <button class="pr-accept-all" onclick="pendingAcceptAll()">✓ Accept All</button>
+      <button class="pr-dismiss-ai" onclick="pendingDismissSystemAdmin()">✕ AI Sessions</button>
     </div>
     <div id="pr-task-list"></div>
     <div style="text-align:center;margin-top:20px;flex-shrink:0;">
@@ -666,7 +669,7 @@ main { flex: 1; overflow: hidden; min-height: 0; position: relative; }
       <div style="display:flex;flex-direction:column;height:100%;background:var(--bg)">
         <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
           <span style="font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase">Google Calendar</span>
-          <a href="https://calendar.google.com/calendar/r?authuser=mynextascent@gmail.com" target="_blank" style="margin-left:auto;font-size:12px;color:var(--blue);text-decoration:none;opacity:0.8">Open in Google Calendar ↗</a>
+          <a onclick="openGoogleCalendarToday()" style="margin-left:auto;font-size:12px;color:var(--blue);text-decoration:none;opacity:0.8;cursor:pointer">Open in Google Calendar ↗</a>
         </div>
         <iframe id="cal-iframe" src="" frameborder="0" style="flex:1;border:none;width:100%;min-height:0;display:none" allow="cross-origin-isolated"></iframe>
         <div id="cal-no-email" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);padding:40px 20px;text-align:center">
@@ -1204,6 +1207,15 @@ function pendingAcceptAll() {
     pt._done = true;
   });
   finishPendingReview();
+}
+
+async function pendingDismissSystemAdmin() {
+  const targets = _pendingTasks.filter(t => !t._done && t.category === 'System Admin');
+  if (!targets.length) { toast('No AI sessions in queue.'); return; }
+  targets.forEach(t => { t._done = true; });
+  await savePendingFile();
+  renderPendingReview();
+  toast(`Dismissed ${targets.length} AI/System Admin task${targets.length !== 1 ? 's' : ''}.`);
 }
 
 async function finishPendingReview() {
@@ -2098,6 +2110,15 @@ function renderCalendar() {
       '&authuser=' + email;
     if (iframe.src !== src) iframe.src = src;
   }
+}
+
+function openGoogleCalendarToday() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const email = (S.settings.calEmail || 'mynextascent@gmail.com').trim();
+  window.open('https://calendar.google.com/calendar/r/week/' + y + '/' + m + '/' + day + '?authuser=' + email, '_blank');
 }
 
 // Google integration removed — calendar uses iframe embed, no OAuth required.
